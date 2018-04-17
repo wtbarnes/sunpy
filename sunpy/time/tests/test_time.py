@@ -48,6 +48,17 @@ def test_parse_time_pandas_timestamp():
     assert dt == LANDING
 
 
+def test_parse_time_pandas_series():
+    inputs = [datetime(2012, 1, i) for i in range(1, 13)]
+    ind = pandas.Series(inputs)
+
+    dts = parse_time(ind)
+
+    assert isinstance(dts, np.ndarray)
+    assert all([isinstance(dt, datetime) for dt in dts])
+    assert list(dts) == inputs
+
+
 def test_parse_time_pandas_index():
     inputs = [datetime(2012, 1, i) for i in range(1, 13)]
     ind = pandas.DatetimeIndex(inputs)
@@ -75,6 +86,39 @@ def test_parse_time_numpy_datetime():
 
     assert isinstance(dts, np.ndarray)
     assert all([isinstance(dt, datetime) for dt in dts])
+
+
+def test_parse_time_individual_numpy_datetime():
+    dt64 = np.datetime64('2005-02-01T00')
+    dt = parse_time(dt64)
+
+    assert isinstance(dt, datetime)
+
+
+def test_parse_time_numpy_datetime_timezone():
+    dt64 = np.datetime64('2014-02-07T16:47:51-0500')
+    dt = parse_time(dt64)
+
+    assert dt == datetime(2014, 2, 7, 21, 47, 51)
+
+
+def test_parse_time_numpy_datetime_ns():
+    dt64 = np.datetime64('2014-02-07T16:47:51.008288000')
+    dt = parse_time(dt64)
+
+    assert dt == datetime(2014, 2, 7, 16, 47, 51, 8288)
+
+    dt64 = np.datetime64('2014-02-07T16:47:51.008288123')
+    dt = parse_time(dt64)
+
+    assert dt == datetime(2014, 2, 7, 16, 47, 51, 8288)
+
+
+def test_parse_time_numpy_datetime_round():
+    dt64 = np.datetime64('2014-02-07T16:47:51.008288999')
+    dt = parse_time(dt64)
+
+    assert dt == datetime(2014, 2, 7, 16, 47, 51, 8288)
 
 
 def test_parse_time_astropy():

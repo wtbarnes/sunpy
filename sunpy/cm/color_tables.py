@@ -542,7 +542,7 @@ def cor_color_table(number):
 
 # Standard TRACE color RGB triples, as defined by the SSWIDL program
 # trace_colors.pro.
-# See http://hesperia.gsfc.nasa.gov/ssw/trace/idl/util/trace_colors.pro
+# See https://hesperia.gsfc.nasa.gov/ssw/trace/idl/util/trace_colors.pro
 trace_171_r = np.array(
       [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -1037,16 +1037,11 @@ def sot_color_table(measurement):
     try:
         r, g, b = {
             'intensity': (r0, g0, b0),
-            # :todo
-            # 'stokesQUV': (),
-            # 'magnetic field': (),
-            # 'velocity': (),
-            # 'width': (),
             }[measurement]
     except KeyError:
         raise ValueError(
             "Invalid (or not supported) SOT type. Valid values are: "
-            "intensity"  # TODO, stokesQUV, magnetic field, velocity, width."
+            "intensity"
             )
 
     cdict = create_cdict(r, g, b)
@@ -1187,27 +1182,27 @@ def hmi_mag_color_table():
     >>> # Example usage for NRT data:
     >>> import sunpy.map
     >>> import sunpy.cm
-    >>> hmi = sunpy.map.Map('fblos.fits')
-    >>> hmi.plot_settings['cmap'] = sunpy.cm.get_cmap('hmimag')
-    >>> hmi.peek(vmin=-1500.0, vmax=1500.0)
+    >>> hmi = sunpy.map.Map('fblos.fits')  # doctest: +SKIP
+    >>> hmi.plot_settings['cmap'] = sunpy.cm.get_cmap('hmimag')  # doctest: +SKIP
+    >>> hmi.peek(vmin=-1500.0, vmax=1500.0)  # doctest: +SKIP
 
     >>> # OR (for a basic plot with pixel values on the axes)
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> import sunpy.map
     >>> import sunpy.cm
-    >>> hmi = sunpy.map.Map('fblos.fits')
-    >>> plt.imshow(np.clip(hmi.data, -1500.0, 1500.0), cmap=sunpy.cm.get_cmap('hmimag'), origin='lower')
-    >>> plt.show()
+    >>> hmi = sunpy.map.Map('fblos.fits')  # doctest: +SKIP
+    >>> plt.imshow(np.clip(hmi.data, -1500.0, 1500.0), cmap=sunpy.cm.get_cmap('hmimag'), origin='lower')  # doctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
 
     >>> # Example usage for science (Level 1.0) data:
     >>> import numpy as np
     >>> import sunpy.map
     >>> import sunpy.cm
-    >>> hmi = sunpy.map.Map('hmi.m_45s.2014.05.11_12_00_45_TAI.magnetogram.fits')
-    >>> hmir = hmi.rotate()
-    >>> hmir.plot_settings['cmap'] = sunpy.cm.get_cmap('hmimag')
-    >>> hmir.peek(vmin=-1500.0, vmax=1500.0)
+    >>> hmi = sunpy.map.Map('hmi.m_45s.2014.05.11_12_00_45_TAI.magnetogram.fits')  # doctest: +SKIP
+    >>> hmir = hmi.rotate()  # doctest: +SKIP
+    >>> hmir.plot_settings['cmap'] = sunpy.cm.get_cmap('hmimag')  # doctest: +SKIP
+    >>> hmir.peek(vmin=-1500.0, vmax=1500.0)  # doctest: +SKIP
 
     References
     ----------

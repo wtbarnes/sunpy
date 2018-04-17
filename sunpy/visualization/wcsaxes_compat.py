@@ -135,8 +135,10 @@ def default_wcs_ticks(axes, units, ctypes):
     x = axes.coords[0]
     y = axes.coords[1]
 
-    x.set_ticks(color='white')
-    y.set_ticks(color='white')
+    if x.ticks.get_tick_out() == 'in':
+        x.set_ticks(color='white')
+    if y.ticks.get_tick_out() == 'in':
+        y.set_ticks(color='white')
 
     x.set_ticks_position('bl')
     y.set_ticks_position('bl')
@@ -228,8 +230,8 @@ def wcsaxes_heliographic_overlay(axes, grid_spacing=10*u.deg, **kwargs):
     lon.coord_wrap = 180
     lon.set_major_formatter('dd')
 
-    lon.set_axislabel('Solar Longitude')
-    lat.set_axislabel('Solar Latitude')
+    lon.set_axislabel('Solar Longitude', minpad=0.8)
+    lat.set_axislabel('Solar Latitude', minpad=0.9)
 
     lon.set_ticks_position('tr')
     lat.set_ticks_position('tr')
@@ -244,6 +246,6 @@ def wcsaxes_heliographic_overlay(axes, grid_spacing=10*u.deg, **kwargs):
 
     if axes.title:
         x, y = axes.title.get_position()
-        axes.title.set_position([x, y + 0.05])
+        axes.title.set_position([x, y + 0.08])
 
     return overlay

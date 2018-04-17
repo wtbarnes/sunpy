@@ -1,20 +1,23 @@
-#Author: Rishabh Sharma <rishabh.sharma.gunner@gmail.com>
-#This module was developed under funding provided by
-#Google Summer of Code 2014
+# Author: Rishabh Sharma <rishabh.sharma.gunner@gmail.com>
+# This module was developed under funding provided by
+# Google Summer of Code 2014
 
+import os
 import datetime
 
 from sunpy.time import parse_time, TimeRange
 
 from ..client import GenericClient
 
+from sunpy.extern.six.moves.urllib.parse import urlsplit
+
 from sunpy import config
 TIME_FORMAT = config.get("general", "time_format")
 
-__all__ = ['GOESClient']
+__all__ = ['XRSClient']
 
 
-class GOESClient(GenericClient):
+class XRSClient(GenericClient):
     def _get_goes_sat_num(self, date):
         """
         Determines the satellite number for a given date.
@@ -54,6 +57,25 @@ class GOESClient(GenericClient):
             raise ValueError('No operational GOES satellites on {}'.format(
                 date.strftime(TIME_FORMAT)))
 
+    def _get_time_for_url(self, urls):
+        times = []
+        for uri in urls:
+            uripath = urlsplit(uri).path
+
+            # Extract the yymmdd or yyyymmdd timestamp
+            datestamp = os.path.splitext(os.path.split(uripath)[1])[0][4:]
+
+            # 1999-01-15 as an integer.
+            if int(datestamp) < 990115:
+                start = datetime.datetime.strptime(datestamp, "%y%m%d")
+            else:
+                start = datetime.datetime.strptime(datestamp, "%Y%m%d")
+
+            almost_day = datetime.timedelta(days=1, milliseconds=-1)
+            times.append(TimeRange(start, start + almost_day))
+
+        return times
+
     def _get_url_for_timerange(self, timerange, **kwargs):
         """
         Returns a URL to the GOES data for the specified date.
@@ -62,17 +84,19 @@ class GOESClient(GenericClient):
         ----------
         timerange: sunpy.time.TimeRange
             time range for which data is to be downloaded.
-        satellite_number : int
+        satellitenumber : int
             GOES satellite number (default = 15)
         data_type : string
             Data type to return for the particular GOES satellite. Supported
             types depend on the satellite number specified. (default = xrs_2s)
         """
         # find out which satellite and datatype to query from the query times
-        base_url = 'http://umbra.nascom.nasa.gov/goes/fits/'
+        base_url = 'https://umbra.nascom.nasa.gov/goes/fits/'
         start_time = datetime.datetime.combine(timerange.start.date(),
                                                datetime.datetime.min.time())
-        total_days = int(timerange.days.value) + 1
+        # make sure we are counting a day even if only a part of it is in the query range.
+        day_range = TimeRange(timerange.start.date(), timerange.end.date())
+        total_days = int(day_range.days.value) + 1
         result = list()
 
         # Iterate over each day in the input timerange and generate a URL for
@@ -84,8 +108,9 @@ class GOESClient(GenericClient):
                 regex += "{date:%y%m%d}.fits"
             else:
                 regex += "{date:%Y%m%d}.fits"
+            satellitenumber = kwargs.get('satellitenumber', self._get_goes_sat_num(date))
             url = base_url + regex.format(
-                date=date, sat=self._get_goes_sat_num(date))
+                date=date, sat=satellitenumber)
             result.append(url)
         return result
 
@@ -112,9 +137,9 @@ class GOESClient(GenericClient):
         boolean
             answer as to whether client can service the query
         """
-        chkattr = ['Time', 'Instrument']
+        chkattr = ['Time', 'Instrument', 'SatelliteNumber']
         chklist = [x.__class__.__name__ in chkattr for x in query]
         for x in query:
-            if x.__class__.__name__ == 'Instrument' and x.value.lower() == 'goes':
+            if x.__class__.__name__ == 'Instrument' and x.value.lower() in ('xrs', 'goes'):
                 return all(chklist)
         return False

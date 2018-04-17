@@ -4,11 +4,6 @@ Fundamental Solar Physical Constants
 These constants are taken from various sources. The structure of this module is heavily
 based on if not directly copied from the SciPy constants module but contains Solar
 Physical constants.
-
-Websites
---------
-| http://books.google.com/books?id=4SWENr1tIJ0C&printsec=frontcover&source=gbs_ge_summary_r&cad=0#v=onepage&q=sfu&f=false
-
 """
 
 from __future__ import absolute_import, division, print_function
@@ -49,7 +44,7 @@ def get(key):
     --------
     >>> from sunpy.sun import constants
     >>> constants.get('mass')
-    <Constant name=u'Solar mass' value=1.9891e+30 uncertainty=5e+25 unit='kg' reference=u"Allen's Astrophysical Quantities 4th Ed.">
+    <<class 'astropy.constants.iau2012.IAU2012'> name='Solar mass' value=1.9891e+30 uncertainty=5e+25 unit='kg' reference="Allen's Astrophysical Quantities 4th Ed.">
     """
     return constants[key]
 

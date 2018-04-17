@@ -17,20 +17,24 @@ SunPy builds upon its functionality.
 Solar data is associated with a number of different time formats. SunPy provides a simple
 parsing function which can deal with most every format that a user may encounter. Called
 `sunpy.time.parse_time()`, this function takes a string as input and returns a datetime object.
-Here are few examples of formats which `sunpy.time.parse_time()` accepts: ::
+Here are few examples of formats which `sunpy.time.parse_time()` accepts::
 
     >>> from sunpy.time import parse_time
-    >>> parse_time('2007-05-04T21:08:12')   # doctest: +SKIP
-    >>> parse_time('2007/05/04T21:08:12')   # doctest: +SKIP
-    >>> parse_time('20070504T210812')   # doctest: +SKIP
-    >>> parse_time('2007-May-04 21:08:12')   # doctest: +SKIP
-    >>> parse_time('20070504_210812')   # doctest: +SKIP
+    >>> parse_time('2007-05-04T21:08:12')
+    datetime.datetime(2007, 5, 4, 21, 8, 12)
+    >>> parse_time('2007/05/04T21:08:12')
+    datetime.datetime(2007, 5, 4, 21, 8, 12)
+    >>> parse_time('20070504T210812')
+    datetime.datetime(2007, 5, 4, 21, 8, 12)
+    >>> parse_time('2007-May-04 21:08:12')
+    datetime.datetime(2007, 5, 4, 21, 8, 12)
+    >>> parse_time('20070504_210812')
     datetime.datetime(2007, 5, 4, 21, 8, 12)
 
 Each of the above returns the same datetime object ``datetime.datetime(2007,
 5, 4, 21, 8, 12)``. One of the most standard time formats used in solar
 physics is the number of seconds since 1979 January 01. The parse_time
-function also accepts this as input, e.g.: ::
+function also accepts this as input, e.g.::
 
     >>> parse_time(894316092.00000000)
     datetime.datetime(2007, 5, 4, 21, 8, 12)
@@ -75,11 +79,11 @@ or days or seconds: ::
     >>> time_range.center
     datetime.datetime(2010, 3, 4, 0, 13, 20)
     >>> time_range.minutes
-    <Quantity 6.666666666666667 min>
+    <Quantity 6.66666667 min>
     >>> time_range.days
-    <Quantity 0.004629629629629629 d>
+    <Quantity 0.00462963 d>
     >>> time_range.seconds
-    <Quantity 400.0 s>
+    <Quantity 400. s>
 
 It also makes it easy to create new time ranges. The functions next() and previous()
 do an inplace update to the object by either adding or subtracting the same time interval
@@ -87,7 +91,7 @@ do an inplace update to the object by either adding or subtracting the same time
 if you needed time ranges that spanned 30 minutes over a period of 4 hours you could do: ::
 
     >>> for a in range(8):
-    ...     print(time_range.next())
+    ...     print(time_range.next())  # doctest: +IGNORE_OUTPUT
         Start: 2010-03-04 00:16:40
         End:   2010-03-04 00:23:20
         Center:2010-03-04 00:20:00

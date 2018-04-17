@@ -37,7 +37,7 @@ Creating Map Objects
 SunPy Map objects are constructed using the special factory
 class `~sunpy.map.Map`: ::
 
-    >>> x = sunpy.map.Map('file.fits')
+    >>> x = sunpy.map.Map('file.fits')  # doctest: +SKIP
 
 The result of a call to `~sunpy.map.Map` will be either a `~sunpy.map.mapbase.GenericMap` object,
 or a subclass of `~sunpy.map.mapbase.GenericMap` which either deals with a specific type of data,
@@ -72,7 +72,7 @@ which convert the specific metadata and other differences in each instruments
 data to the standard `~sunpy.map.GenericMap` interface.
 These 'sources' also define things like the colormap and default
 normalisation for each instrument.
-These subclasses also provide a method, which describes to the ``Map`` factory
+These subclasses also provide a method, which describes to the `Map <sunpy.map.map_factory.MapFactory>` factory
 which data and metadata pairs match its instrument.
 
 .. automodapi:: sunpy.map
@@ -92,7 +92,7 @@ Writing a new Instrument Map Class
 
 Any subclass of `~sunpy.map.GenericMap` which defines a method named
 `~sunpy.map.GenericMap.is_datasource_for` will automatically be registered with
-the ``Map`` factory. The ``is_datasource_for`` method describes the form of the
+the `Map <sunpy.map.map_factory.MapFactory>` factory. The ``is_datasource_for`` method describes the form of the
 data and metadata for which the `~sunpy.map.GenericMap` subclass is valid. For
 example it might check the value of the ``INSTRUMENT`` key in the metadata
 dictionary.
@@ -120,7 +120,7 @@ demonstrated by the following example.
             return header.get('instrume', '').startswith('FUTURESCOPE')
 
 
-This class will now be available through the ``Map`` factory as long as this
+This class will now be available through the `Map <sunpy.map.map_factory.MapFactory>` factory as long as this
 class has been defined, i.e. imported into the current session.
 
 If you do not want to create a method named ``is_datasource_for`` you can

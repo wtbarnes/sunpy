@@ -23,9 +23,10 @@ There are maps for a 2D image, a time series of 2D images or temporally aligned
 SunPy supports many different data products from various sources 'out of the
 box'. We shall use SDO's AIA instrument as an example in this tutorial. The
 general way to create a Map from one of the supported data products is with the
-`~sunpy.map.Map()` function from the `sunpy.map` submodule. `~sunpy.map.Map()`
-takes either a filename, a list of filenames or a data array and header. We can
-test ``Map()`` with:
+`Map <sunpy.map.map_factory.MapFactory>` function from the `sunpy.map` submodule.
+`Map <sunpy.map.map_factory.MapFactory` takes either a filename, a list of
+filenames or a data array and header. We can test
+`Map <sunpy.map.map_factory.MapFactory>` with:
 
 
 .. plot::
@@ -60,9 +61,12 @@ create some fake data and pass it into a timeseries object.
     my_timeseries = ts.TimeSeries(sunpy.data.sample.GOES_XRS_TIMESERIES, source='XRS')
     my_timeseries.peek()
 
-We've created this timeseries object by passing TimeSeries a string which represent the name of a GOES lightcurve file.
-The ``.peek()`` method plots the timeseries data and displays the plot with some default settings.
-You can also use ``my_timeseries.plot()`` if you want more control over the style of the output plot.
+We've created this timeseries object by passing TimeSeries a string which
+represents the name of a GOES lightcurve file. The
+`.peek() <sunpy.timeseries.GenericTimeSeries.peek>` method plots the timeseries
+data and displays the plot with some default settings. You can also use
+`my_timeseries.plot() <sunpy.timeseries.TimeSeries.plot>` if you want more
+control over the style of the output plot.
 
 For more information about TimeSeries, check out the
 :doc:`timeseries guide <data_types/timeseries>` and the
@@ -70,6 +74,9 @@ and the :ref:`timeseries_code_ref`.
 
 Spectra
 -------
+
+.. warning:: This module is under development! It is being moved into its own
+             `repository <http://docs.sunpy.org/projects/radiospectra/>`__.
 
 SunPy has spectral support for instruments which have such a capacity. CALLISTO,
 an international network of Solar Radio Spectrometers, is a specific example.
@@ -91,7 +98,7 @@ Plotting
 
 SunPy uses a matplotlib-like interface to its plotting so more complex plots can
 be built by combining SunPy with matplotlib. If you're not familiar with
-plotting in matplotlib, you should `learn the basics <http://matplotlib.org/users/tutorials.html>`__
+plotting in matplotlib, you should `learn the basics <https://matplotlib.org/users/tutorials.html>`__
 before continuing with this guide.
 
 Let's begin by creating a simple plot of an AIA image. To make things easy,
@@ -116,8 +123,8 @@ labels.
 There is lot going on here, but we will walk you through the example. Briefly,
 the first line is importing SunPy, and the second importing the sample data
 files. On the third line we create a SunPy Map object which is a spatially-aware
-image. On the last line we then plot the ``Map`` object, using the built in 'quick
-plot' function `~sunpy.map.GenericMap.peek`.
+image. On the last line we then plot the `Map <sunpy.map.map_factory.MapFactory>` object, using the built in 'quick plot'
+function `~sunpy.map.GenericMap.peek`.
 
 SunPy uses a matplotlib-like interface to it's plotting so more complex
 plots can be built by combining SunPy with matplotlib.
@@ -153,19 +160,19 @@ a short bit of code to get you started: ::
     >>> from sunpy.sun import constants as con
 
     # one astronomical unit (the average distance between the Sun and Earth)
-    >>> print con.au
+    >>> print(con.au)
       Name   = Astronomical Unit
-      Value  = 1.495978707e+11
-      Error  = 0.0
-      Units  = m
+      Value  = 149597870700.0
+      Uncertainty  = 0.0
+      Unit  = m
       Reference = IAU 2012 Resolution B2
 
     # the solar radius
-    >>> print con.radius
+    >>> print(con.radius)
       Name   = Solar radius
       Value  = 695508000.0
-      Error  = 26000.0
-      Units  = m
+      Uncertainty  = 26000.0
+      Unit  = m
       Reference = Allen's Astrophysical Quantities 4th Ed.
 
 Not all constants have a shortcut assigned to them (as above). The rest of the constants
@@ -173,14 +180,16 @@ are stored in a dictionary. The following code grabs the dictionary and gets all
 keys.::
 
     >>> solar_constants = con.constants
-    >>> solar_constants.keys()   # doctest: +NORMALIZE_WHITESPACE
-    ['solar flux unit', 'surface area', 'average density', 'radius', 'surface
-    gravity', 'ellipticity', 'visual magnitude', 'center density', 'average
-    angular size', 'absolute magnitude', 'sunspot cycle', 'effective
-    temperature', 'aphelion distance', 'mean energy production', 'mass
-    conversion rate', 'average intensity', 'volume', 'metallicity', 'moment of
-    inertia', 'escape velocity', 'perihelion distance', 'GM', 'oblateness',
-    'mean distance', 'age', 'mass', 'luminosity', 'center temperature']
+    >>> solar_constants.keys()
+    dict_keys(['mass', 'radius', 'luminosity', 'mean distance',
+               'perihelion distance', 'aphelion distance', 'age',
+               'solar flux unit', 'visual magnitude', 'average angular size',
+               'surface area', 'average density', 'surface gravity',
+               'moment of inertia', 'volume', 'escape velocity', 'oblateness',
+               'metallicity', 'sunspot cycle', 'average intensity',
+               'effective temperature', 'mass conversion rate', 'center density',
+               'center temperature', 'absolute magnitude', 'mean energy production',
+               'ellipticity', 'GM'])
 
 You can also use the function `sunpy.constants.print_all()` to print out a table of all of the values
 available. These constants are provided as a convenience so that everyone is using the same
@@ -202,18 +211,18 @@ that can be expressed in length units ::
 
     >>> from sunpy.sun import constants as con
     >>> con.radius
-    <Constant name=u'Solar radius' value=695508000.0 error=26000.0 units='m' reference=u"Allen's Astrophysical Quantities 4th Ed.">
+    <<class 'astropy.constants.iau2012.IAU2012'> name='Solar radius' value=695508000.0 uncertainty=26000.0 unit='m' reference="Allen's Astrophysical Quantities 4th Ed.">
 
 shows the solar radius in units of meters.  The same physical quantity can be expressed in different units instead using the `.to()` method::
 
     >>> con.radius.to('km')
-    >>> <Quantity 695508.0 km>
+    <Quantity 695508. km>
 
 or equivalently::
 
     >>> import astropy.units as u
     >>> con.radius.to(u.km)
-    >>> <Quantity 695508.0 km>
+    <Quantity 695508. km>
 
 If, as is sometimes the case, you need just the raw value or the unit from a quantity, you can access these individually
 with the `value` and `unit` attributes, respectively::
@@ -241,24 +250,24 @@ the calculation. Therefore, if we define the radius in meters, the area will
 be in meters squared::
 
     >>> circle_area(4 * u.m)
-    <Quantity 50.26548245743669 m2>
+    <Quantity 50.26548246 m2>
 
 This also works with different units, for example ::
 
     >>> circle_area(4 * u.imperial.foot)
-    <Quantity 50.26548245743669 ft2>
+    <Quantity 50.26548246 ft2>
 
 As demonstrated above, we can convert between different systems of measurement.
 For example, if you want the area of a circle in square feet, but were given
 the radius in meters, then you can convert it before passing it into the function::
 
     >>> circle_area((4 * u.m).to(u.imperial.foot))
-    <Quantity 541.0531502245425 ft2>
+    <Quantity 541.05315022 ft2>
 
 or you can convert the output::
 
     >>> circle_area(4 * u.m).to(u.imperial.foot ** 2)
-    <Quantity 541.0531502245426 ft2>
+    <Quantity 541.05315022 ft2>
 
 
 This is an extremely brief summary of the powerful capbilities of Astropy units.  To find out more, see
@@ -299,30 +308,16 @@ Obtaining Data
 --------------
 
 SunPy supports searching for and fetching data from a variety of sources,
-including the `VSO <http://virtualsolar.org/>`__ and the
+including the `VSO <https://virtualsolar.org/>`__ and the
 `JSOC <http://jsoc.stanford.edu/>`__. The majority of SunPy's clients can be
-queried using the ``Fido`` interface. An example of searching the VSO using this
+queried using the `Fido <sunpy.net.fido_factory.UnifiedDownloaderFactory>` interface. An example of searching the VSO using this
 is below::
 
   >>> from sunpy.net import Fido, attrs as a
 
   >>> results = Fido.search(a.Time("2011-09-20T01:00:00", "2011-09-20T02:00:00"),
-                            a.Instrument('EIT'))   # doctest: +NORMALIZE_WHITESPACE
-
-  <sunpy.net.fido_factory.UnifiedResponse object at 0x7fe70e6c6160>
-  Results from 1 Provider:
-
-  4 Results from the VSOClient:
-    Start Time [1]       End Time [1]    Source Instrument   Type   Wavelength [2]
-                                                                        Angstrom
-        str19               str19         str4     str3      str8      float64
-  ------------------- ------------------- ------ ---------- -------- --------------
-  2011-09-20 01:00:15 2011-09-20 01:00:27   SOHO        EIT FULLDISK 171.0 .. 171.0
-  2011-09-20 01:06:13 2011-09-20 01:08:15   SOHO        EIT FULLDISK 284.0 .. 284.0
-  2011-09-20 01:13:53 2011-09-20 01:14:05   SOHO        EIT FULLDISK 195.0 .. 195.0
-  2011-09-20 01:19:47 2011-09-20 01:20:19   SOHO        EIT FULLDISK 304.0 .. 304.0
-
-  >>> Fido.fetch(results, path="./directory/")
+  ...                       a.Instrument('EIT'))   # doctest:  +REMOTE_DATA
+  >>> Fido.fetch(results, path="./directory/")  # doctest: +SKIP
   ['./directory/efz20110920.010015',
    './directory/efz20110920.010613',
    './directory/efz20110920.011353',
@@ -346,55 +341,53 @@ A simple example of this is shown below::
 
   >>> db = Database()
   >>> db.fetch(a.Time("2011-09-20T01:00:00", "2011-09-20T02:00:00"),
-               a.Instrument('AIA'), a.vso.Sample(15*u.min))
-  >>> db.commit()
+  ...          a.Instrument('AIA'), a.vso.Sample(15*u.min))  # doctest: +REMOTE_DATA
+  >>> db.commit()  # doctest: +REMOTE_DATA
 
-  >>> db
-
+  >>> db  # doctest: +SKIP
   <Table length=10>
-  id  observation_time_start observation_time_end instrument source provider  physobs  wavemin wavemax                                      path                                              fileid          tags starred    download_time      size
-  str2         str19                 str19            str3     str3    str4      str9     str4    str4                                      str77                                              str24           str3   str2         str19          str7
-  ---- ---------------------- -------------------- ---------- ------ -------- --------- ------- ------- ----------------------------------------------------------------------------- ------------------------ ---- ------- ------------------- -------
-    1    2011-09-20 01:00:00  2011-09-20 01:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_00_00_34z_image_lev1.fits aia__lev1:171:1095555635  N/A      No 2017-08-03 19:41:00 66200.0
-    2    2011-09-20 01:00:00  2011-09-20 01:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_00_00_34z_image_lev1.fits aia__lev1:171:1095555635  N/A      No 2017-08-03 19:41:00 66200.0
-    3    2011-09-20 01:15:00  2011-09-20 01:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_15_00_34z_image_lev1.fits aia__lev1:171:1095556535  N/A      No 2017-08-03 19:41:00 66200.0
-    4    2011-09-20 01:15:00  2011-09-20 01:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_15_00_34z_image_lev1.fits aia__lev1:171:1095556535  N/A      No 2017-08-03 19:41:00 66200.0
-    5    2011-09-20 01:30:00  2011-09-20 01:30:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_30_00_34z_image_lev1.fits aia__lev1:171:1095557435  N/A      No 2017-08-03 19:41:01 66200.0
-    6    2011-09-20 01:30:00  2011-09-20 01:30:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_30_00_34z_image_lev1.fits aia__lev1:171:1095557435  N/A      No 2017-08-03 19:41:01 66200.0
-    7    2011-09-20 01:45:00  2011-09-20 01:45:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_45_00_34z_image_lev1.fits aia__lev1:171:1095558335  N/A      No 2017-08-03 19:41:01 66200.0
-    8    2011-09-20 01:45:00  2011-09-20 01:45:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_45_00_34z_image_lev1.fits aia__lev1:171:1095558335  N/A      No 2017-08-03 19:41:01 66200.0
-    9    2011-09-20 02:00:00  2011-09-20 02:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_00_00_34z_image_lev1.fits aia__lev1:171:1095559235  N/A      No 2017-08-03 19:41:01 66200.0
-   10    2011-09-20 02:00:00  2011-09-20 02:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_00_00_34z_image_lev1.fits aia__lev1:171:1095559235  N/A      No 2017-08-03 19:41:01 66200.0
-
+   id  observation_time_start observation_time_end ...    download_time      size
+  str2         str19                 str19         ...        str19          str7
+  ---- ---------------------- -------------------- ... ------------------- -------
+     1    2011-09-20 01:15:00  2011-09-20 01:15:01 ... 2018-03-01 21:02:33 66200.0
+     2    2011-09-20 01:15:00  2011-09-20 01:15:01 ... 2018-03-01 21:02:33 66200.0
+     3    2011-09-20 01:00:00  2011-09-20 01:00:01 ... 2018-03-01 21:02:33 66200.0
+     4    2011-09-20 01:00:00  2011-09-20 01:00:01 ... 2018-03-01 21:02:33 66200.0
+     5    2011-09-20 01:45:00  2011-09-20 01:45:01 ... 2018-03-01 21:02:33 66200.0
+     6    2011-09-20 01:45:00  2011-09-20 01:45:01 ... 2018-03-01 21:02:33 66200.0
+     7    2011-09-20 02:00:00  2011-09-20 02:00:01 ... 2018-03-01 21:02:33 66200.0
+     8    2011-09-20 02:00:00  2011-09-20 02:00:01 ... 2018-03-01 21:02:33 66200.0
+     9    2011-09-20 01:30:00  2011-09-20 01:30:01 ... 2018-03-01 21:02:33 66200.0
+    10    2011-09-20 01:30:00  2011-09-20 01:30:01 ... 2018-03-01 21:02:33 66200.0
 
 If you then do a second query::
 
   >>> db.fetch(a.Time("2011-09-20T01:00:00", "2011-09-20T02:15:00"),
-               a.Instrument('AIA'), a.vso.Sample(15*u.min))
-  >>> db.commit()
-  >>> db
+  ...          a.Instrument('AIA'), a.vso.Sample(15*u.min))  # doctest: +REMOTE_DATA
+  >>> db.commit()  # doctest: +REMOTE_DATA
+  >>> db  # doctest: +SKIP
   <Table length=12>
-  id  observation_time_start observation_time_end instrument source provider  physobs  wavemin wavemax                                      path                                              fileid          tags starred    download_time      size
-  str2         str19                 str19            str3     str3    str4      str9     str4    str4                                      str77                                              str24           str3   str2         str19          str7
-  ---- ---------------------- -------------------- ---------- ------ -------- --------- ------- ------- ----------------------------------------------------------------------------- ------------------------ ---- ------- ------------------- -------
-    1    2011-09-20 01:00:00  2011-09-20 01:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_00_00_34z_image_lev1.fits aia__lev1:171:1095555635  N/A      No 2017-08-03 19:41:00 66200.0
-    2    2011-09-20 01:00:00  2011-09-20 01:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_00_00_34z_image_lev1.fits aia__lev1:171:1095555635  N/A      No 2017-08-03 19:41:00 66200.0
-    3    2011-09-20 01:15:00  2011-09-20 01:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_15_00_34z_image_lev1.fits aia__lev1:171:1095556535  N/A      No 2017-08-03 19:41:00 66200.0
-    4    2011-09-20 01:15:00  2011-09-20 01:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_15_00_34z_image_lev1.fits aia__lev1:171:1095556535  N/A      No 2017-08-03 19:41:00 66200.0
-    5    2011-09-20 01:30:00  2011-09-20 01:30:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_30_00_34z_image_lev1.fits aia__lev1:171:1095557435  N/A      No 2017-08-03 19:41:01 66200.0
-    6    2011-09-20 01:30:00  2011-09-20 01:30:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_30_00_34z_image_lev1.fits aia__lev1:171:1095557435  N/A      No 2017-08-03 19:41:01 66200.0
-    7    2011-09-20 01:45:00  2011-09-20 01:45:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_45_00_34z_image_lev1.fits aia__lev1:171:1095558335  N/A      No 2017-08-03 19:41:01 66200.0
-    8    2011-09-20 01:45:00  2011-09-20 01:45:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t01_45_00_34z_image_lev1.fits aia__lev1:171:1095558335  N/A      No 2017-08-03 19:41:01 66200.0
-    9    2011-09-20 02:00:00  2011-09-20 02:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_00_00_34z_image_lev1.fits aia__lev1:171:1095559235  N/A      No 2017-08-03 19:41:01 66200.0
-   10    2011-09-20 02:00:00  2011-09-20 02:00:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_00_00_34z_image_lev1.fits aia__lev1:171:1095559235  N/A      No 2017-08-03 19:41:01 66200.0
-   11    2011-09-20 02:15:00  2011-09-20 02:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_15_00_34z_image_lev1.fits aia__lev1:171:1095560135  N/A      No 2017-08-03 19:42:19 66200.0
-   12    2011-09-20 02:15:00  2011-09-20 02:15:01        AIA    SDO     JSOC intensity    17.1    17.1 /home/stuart/sunpy/data/aia_lev1_171a_2011_09_20t02_15_00_34z_image_lev1.fits aia__lev1:171:1095560135  N/A      No 2017-08-03 19:42:19 66200.0
+   id  observation_time_start observation_time_end ...    download_time      size
+  str2         str19                 str19         ...        str19          str7
+  ---- ---------------------- -------------------- ... ------------------- -------
+     1    2011-09-20 01:00:00  2011-09-20 01:00:01 ... 2017-08-03 19:41:00 66200.0
+     2    2011-09-20 01:00:00  2011-09-20 01:00:01 ... 2017-08-03 19:41:00 66200.0
+     3    2011-09-20 01:15:00  2011-09-20 01:15:01 ... 2017-08-03 19:41:00 66200.0
+     4    2011-09-20 01:15:00  2011-09-20 01:15:01 ... 2017-08-03 19:41:00 66200.0
+     5    2011-09-20 01:30:00  2011-09-20 01:30:01 ... 2017-08-03 19:41:01 66200.0
+     6    2011-09-20 01:30:00  2011-09-20 01:30:01 ... 2017-08-03 19:41:01 66200.0
+     7    2011-09-20 01:45:00  2011-09-20 01:45:01 ... 2017-08-03 19:41:01 66200.0
+     8    2011-09-20 01:45:00  2011-09-20 01:45:01 ... 2017-08-03 19:41:01 66200.0
+     9    2011-09-20 02:00:00  2011-09-20 02:00:01 ... 2017-08-03 19:41:01 66200.0
+    10    2011-09-20 02:00:00  2011-09-20 02:00:01 ... 2017-08-03 19:41:01 66200.0
+    11    2011-09-20 02:15:00  2011-09-20 02:15:01 ... 2017-08-03 19:42:19 66200.0
+    12    2011-09-20 02:15:00  2011-09-20 02:15:01 ... 2017-08-03 19:42:19 66200.0
 
 
 A query can then be performed against the database to get the records.
 
-  >>> entries = db.query(a.Time("2011-09-20T01:45:00", "2011-09-20T02:15:00"), a.Instrument('AIA'))
-  >>> len(entries)
+  >>> entries = db.search(a.Time("2011-09-20T01:45:00", "2011-09-20T02:15:00"), a.Instrument('AIA'))  # doctest: +REMOTE_DATA
+  >>> len(entries)  # doctest: +REMOTE_DATA
   4
 
 You can see that only two extra records were added to the database. For more

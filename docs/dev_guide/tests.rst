@@ -1,3 +1,5 @@
+.. _testing:
+
 Testing
 =======
 
@@ -41,7 +43,7 @@ working connection to the internet. pytest is configured in a way that it
 iterates over all tests that have been marked as *online* and checks if
 there is an established connection to the internet. If there is none, the
 test is skipped, otherwise it is run. Marking tests is pretty
-straightforward in pytest: use the decorator ``@pytest.mark.online`` to
+straightforward in pytest: use the decorator ``@pytest.mark.remote_data`` to
 mark a test function as needing an internet connection.
 
 Writing a unit test for a figure
@@ -112,11 +114,23 @@ you need to use the option ``-rs`` for skipped tests and ``-rx`` for
 xfailed tests, respectively. Or use ``-rxs`` for detailed information on
 both skipped and xfailed tests.
 
+
 When to write unit tests
 ------------------------
 
 A rule of thumb for unit testing is to have at least one unit test per public
 function.
+
+
+Writing Doctests
+----------------
+
+Code examples in the documentation will also be run as tests, this helps to
+validate that the documentation is accurate and upto date. SunPy uses the same
+doctest system as astropy, so for information on writing doctests see
+:ref:`astropy:doctests` in the astropy documentation.
+
+
 
 Testing Your Code Before Committing
 -----------------------------------
@@ -145,7 +159,7 @@ specified in the .travis.yml file in the root of the SunPy repo.
 New Functionality
 -----------------
 
-For SunPy, we would encourage all developers to thoroughly `cover <http://en.wikipedia.org/wiki/Code_coverage>`_
+For SunPy, we would encourage all developers to thoroughly `cover <https://en.wikipedia.org/wiki/Code_coverage>`_
 their code by writing unit tests for each new function created.
 
 Developers who want to take an aggressive approach to reducing bugs may even

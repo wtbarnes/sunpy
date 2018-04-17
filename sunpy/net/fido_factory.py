@@ -1,13 +1,16 @@
 """
-This module contains the factory code for the ``sunpy.net.Fido`` factory. As
-well as defining ``Fido`` which is an instance of
-`sunpy.net.fido_factory.UnifiedDownloaderFactory` it defines
-`~sunpy.net.fido_factory.UnifiedResponse` which ``Fido.search`` returns.
-`~sunpy.net.fido_factory.DownloadResponse` objects are returned by ``Fido.fetch``.
+This module provides the `Fido
+<sunpy.net.fido_factory.UnifiedDownloaderFactory>` instance of
+`sunpy.net.fido_factory.UnifiedDownloaderFactory` it also provides the
+`~sunpy.net.fido_factory.UnifiedResponse` class which
+`Fido.search <sunpy.net.fido_factory.UnifiedDownloaderFactory.search>` returns and the
+`~sunpy.net.fido_factory.DownloadResponse` class that is returned by
+`Fido.fetch <sunpy.net.fido_factory.UnifiedDownloaderFactory.fetch>`.
 
 """
 # This module was initially developed under funding provided by Google Summer
 # of Code 2014
+from __future__ import print_function, absolute_import
 from collections import Sequence
 
 from sunpy.util.datatype_factory_base import BasicRegistrationFactory
@@ -18,8 +21,8 @@ from sunpy.net.dataretriever.clients import CLIENTS
 from sunpy.net.dataretriever.client import QueryResponse
 from sunpy.net.vso import VSOClient, QueryResponse as vsoQueryResponse
 
-from . import attr
-from . import attrs as a
+from sunpy.net import attr
+from sunpy.net import attrs as a
 
 __all__ = ['Fido', 'UnifiedResponse', 'UnifiedDownloaderFactory', 'DownloadResponse']
 
@@ -35,20 +38,15 @@ class UnifiedResponse(Sequence):
     second index can be used to select records from the results returned from
     that client, for instance if you only want every second result you could
     index the second dimension with ``::2``.
-
-    Parameters
-    ----------
-    lst : `object`
-        A single instance or an iterable of ``(QueryResponse, client)`` pairs
-        or ``QueryResponse`` objects with a ``.client`` attribute.
     """
 
     def __init__(self, lst):
         """
-        Input to this constructor can be one of a few things:
-
-        1. A ``QueryResponse`` object
-        2. A list of tuples ``(QueryResponse, client)``
+        Parameters
+        ----------
+        lst : `object`
+            A single instance or an iterable of ``(QueryResponse, client)``
+            pairs or ``QueryResponse`` objects with a ``.client`` attribute.
         """
 
         tmplst = []
@@ -58,7 +56,7 @@ class UnifiedResponse(Sequence):
             if not hasattr(lst, 'client'):
                 raise ValueError(
                     ("A {} object is only a valid input to UnifiedResponse "
-                    "if it has a client attribute.").
+                     "if it has a client attribute.").
                     format(type(lst).__name__))
             tmplst.append(lst)
             self._numfile = len(lst)
@@ -74,7 +72,6 @@ class UnifiedResponse(Sequence):
                 else:
                     raise ValueError(
                         "{} is not a valid input to UnifiedResponse.".format(type(lst)))
-
         self._list = tmplst
 
     def __len__(self):
@@ -149,6 +146,11 @@ class UnifiedResponse(Sequence):
     def response_block_properties(self):
         """
         Returns a set of class attributes on all the response blocks.
+
+        Returns
+        -------
+        s : list
+            List of strings, containing attribute names in the response blocks.
         """
         s = self.get_response(0).response_block_properties()
         for i in range(1, len(self)):
@@ -247,8 +249,8 @@ query_walker = attr.AttrWalker()
 
 @query_walker.add_creator(attr.AttrAnd)
 def _create_and(walker, query, factory):
-    att = {type(x) for x in query.attrs}
-    if a.Time not in att:
+    is_time = any([isinstance(x, a.Time) for x in query.attrs])
+    if not is_time:
         error = "The following part of the query did not have a time specified:\n"
         for at in query.attrs:
             error += str(at) + ', '
@@ -283,21 +285,22 @@ class UnifiedDownloaderFactory(BasicRegistrationFactory):
         Query for LYRALightCurve data for the time range ('2012/3/4','2012/3/6')
 
         >>> from sunpy.net import Fido, attrs as a
-        >>> unifresp = Fido.search(a.Time('2012/3/4', '2012/3/6'), a.Instrument('lyra'))
+        >>> import astropy.units as u
+        >>> unifresp = Fido.search(a.Time('2012/3/4', '2012/3/6'), a.Instrument('lyra')) # doctest: +REMOTE_DATA
 
         Query for data from Nobeyama Radioheliograph and RHESSI
 
         >>> unifresp = Fido.search(a.Time('2012/3/4', '2012/3/6'),
-                          (a.Instrument('norh') & a.Wavelength(17*u.GHz)) | a.Instrument('rhessi'))
+        ...     (a.Instrument('norh') & a.Wavelength(17*u.GHz)) | a.Instrument('rhessi'))  # doctest: +REMOTE_DATA
 
         Query for 304 Angstrom SDO AIA data with a cadence of 10 minutes
 
         >>> import astropy.units as u
         >>> from sunpy.net import Fido, attrs as a
         >>> unifresp = Fido.search(a.Time('2012/3/4', '2012/3/6'),
-                                   a.Instrument('AIA'),
-                                   a.Wavelength(304*u.angstrom, 304*u.angstrom),
-                                   a.vso.Sample(10*u.minute))
+        ...                        a.Instrument('AIA'),
+        ...                        a.Wavelength(304*u.angstrom, 304*u.angstrom),
+        ...                        a.vso.Sample(10*u.minute))  # doctest: +REMOTE_DATA
 
         Parameters
         ----------
@@ -309,7 +312,7 @@ class UnifiedDownloaderFactory(BasicRegistrationFactory):
 
         Returns
         -------
-        `sunpy.net.fido_factory.UnifiedResponse` object
+        `sunpy.net.fido_factory.UnifiedResponse`
             Container of responses returned by clients servicing query.
 
         Notes
@@ -347,16 +350,16 @@ class UnifiedDownloaderFactory(BasicRegistrationFactory):
         Example
         --------
         >>> from sunpy.net.vso.attrs import Time, Instrument
-        >>> unifresp = Fido.search(Time('2012/3/4','2012/3/6'), Instrument('AIA'))
-        >>> downresp = Fido.fetch(unifresp)
-        >>> file_paths = downresp.wait()
+        >>> unifresp = Fido.search(Time('2012/3/4','2012/3/5'), Instrument('EIT'))  # doctest: +REMOTE_DATA
+        >>> downresp = Fido.fetch(unifresp)  # doctest: +SKIP
+        >>> file_paths = downresp.wait()  # doctest: +SKIP
         """
         wait = kwargs.pop("wait", True)
         progress = kwargs.pop("progress", True)
         reslist = []
         for query_result in query_results:
             for block in query_result.responses:
-                reslist.append(block.client.get(block, **kwargs))
+                reslist.append(block.client.fetch(block, **kwargs))
 
         results = DownloadResponse(reslist)
 
@@ -408,11 +411,11 @@ class UnifiedDownloaderFactory(BasicRegistrationFactory):
         response : `~sunpy.net.dataretriever.client.QueryResponse`
 
         client : `object`
-		Instance of client class
+            Instance of client class
         """
         candidate_widget_types = self._check_registered_widgets(*query)
         tmpclient = candidate_widget_types[0]()
-        return tmpclient.query(*query), tmpclient
+        return tmpclient.search(*query), tmpclient
 
 
 Fido = UnifiedDownloaderFactory(

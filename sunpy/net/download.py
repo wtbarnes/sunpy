@@ -24,6 +24,8 @@ from sunpy.util.progressbar import TTYProgressBar as ProgressBar
 from sunpy.util.config import get_and_create_download_dir
 
 
+__all__  = ['Downloader', 'Results']
+
 def default_name(path, sock, url):
     name = sock.headers.get('Content-Disposition', url.rsplit('/', 1)[-1])
     return os.path.join(path, name)
@@ -105,9 +107,15 @@ class Downloader(object):
         raise e
 
     def wait(self):
+        """
+        Waits for all files to download and then return.
+        """
         self.done_lock.acquire()
 
     def stop(self):
+        """
+        Stops all downloads and then return.
+        """
         self.done_lock.release()
 
     def init(self):
@@ -134,7 +142,7 @@ class Downloader(object):
         out : None
         """
         # Load balancing?
-        # @todo: explain
+        # TODO: explain
 
         server = self._get_server(url)
 

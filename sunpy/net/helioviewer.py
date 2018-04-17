@@ -68,11 +68,10 @@ class HelioviewerClient(object):
 
         Examples
         --------
-        >>> from sunpy.net import HelioviewerClient
-
-        >>> client = HelioviewerClient()
-        >>> metadata = client.get_closest_image('2012/01/01', sourceId=11)
-        >>> print(metadata['date'])
+        >>> from sunpy.net import helioviewer
+        >>> client = helioviewer.HelioviewerClient()  # doctest: +REMOTE_DATA
+        >>> metadata = client.get_closest_image('2012/01/01', sourceId=11)  # doctest: +REMOTE_DATA
+        >>> print(metadata['date'])  # doctest: +REMOTE_DATA
         2012-01-01 00:00:07
         """
         params = {
@@ -126,13 +125,13 @@ class HelioviewerClient(object):
         --------
         >>> import sunpy.map
         >>> from sunpy.net import helioviewer
-        >>> hv = helioviewer.HelioviewerClient()
-        >>> filepath = hv.download_jp2('2012/07/03 14:30:00', observatory='SDO', instrument='AIA', detector='AIA', measurement='171')   # doctest: +SKIP
-        >>> aia = sunpy.map.Map(filepath)   # doctest: +SKIP
+        >>> hv = helioviewer.HelioviewerClient()  # doctest: +REMOTE_DATA
+        >>> filepath = hv.download_jp2('2012/07/03 14:30:00', observatory='SDO', instrument='AIA', detector='AIA', measurement='171')   # doctest: +REMOTE_DATA
+        >>> aia = sunpy.map.Map(filepath)   # doctest: +REMOTE_DATA
         >>> aia.peek()   # doctest: +SKIP
 
-        >>> data_sources = hv.get_data_sources()
-        >>> hv.download_jp2('2012/07/03 14:30:00', sourceId=data_sources['SOHO']['LASCO']['C2']['white-light']['sourceId'])   # doctest: +SKIP
+        >>> data_sources = hv.get_data_sources()  # doctest: +REMOTE_DATA
+        >>> file = hv.download_jp2('2012/07/03 14:30:00', sourceId=data_sources['SOHO']['LASCO']['C2']['white-light']['sourceId'])   # doctest: +REMOTE_DATA
         """
         params = {
             "action": "getJP2Image",
@@ -205,9 +204,9 @@ class HelioviewerClient(object):
         Examples
         --------
         >>> from sunpy.net.helioviewer import HelioviewerClient
-        >>> hv = HelioviewerClient()
-        >>> hv.download_png('2012/07/16 10:08:00', 2.4, "[SDO,AIA,AIA,171,1,100]", x0=0, y0=0, width=1024, height=1024)   # doctest: +SKIP
-        >>> hv.download_png('2012/07/16 10:08:00', 4.8, "[SDO,AIA,AIA,171,1,100],[SOHO,LASCO,C2,white-light,1,100]", x1=-2800, x2=2800, y1=-2800, y2=2800, directory='~/Desktop')   # doctest: +SKIP
+        >>> hv = HelioviewerClient()  # doctest: +REMOTE_DATA
+        >>> file = hv.download_png('2012/07/16 10:08:00', 2.4, "[SDO,AIA,AIA,171,1,100]", x0=0, y0=0, width=1024, height=1024)   # doctest: +REMOTE_DATA
+        >>> file = hv.download_png('2012/07/16 10:08:00', 4.8, "[SDO,AIA,AIA,171,1,100],[SOHO,LASCO,C2,white-light,1,100]", x1=-2800, x2=2800, y1=-2800, y2=2800)   # doctest: +REMOTE_DATA
         """
         params = {
             "action": "takeScreenshot",

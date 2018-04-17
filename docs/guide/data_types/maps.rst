@@ -12,19 +12,17 @@ Creating maps
 -------------
 To make things easy, SunPy can download several example files which are used
 throughout the docs. These files have names like
-`~sunpy.data.sample.AIA_171_IMAGE` and `~sunpy.data.sample.RHESSI_IMAGE`.
-To create the sample `sunpy.map.sources.sdo.AIAMap` type the following into your
-interactive Python shell::
+`~sunpy.data.sample.AIA_171_IMAGE` and `~sunpy.data.sample.RHESSI_IMAGE`. To
+create a `Map <sunpy.map.map_factory.MapFactory>` from the the sample AIA image
+type the following into your Python shell::
 
     >>> import sunpy
     >>> import sunpy.map
-    >>> import sunpy.data.sample
-    >>> my_map = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)
+    >>> import sunpy.data.sample  # doctest: +REMOTE_DATA
 
-If you have not downloaded the data already you should get an error and some
-instruction on how to download the sample data.
+    >>> my_map = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)  # doctest: +REMOTE_DATA
 
-The variable my_map is a :ref:`map` object. To create one from a
+The variable my_map is an `~sunpy.map.sources.AIAMap` object. To create one from a
 local FITS file try the following::
 
     >>> my_map = sunpy.map.Map('/mydirectory/mymap.fits')   # doctest: +SKIP
@@ -35,48 +33,52 @@ appropriate places for the FITS keywords it needs to interpret the coordinate
 system. If the type of FITS file is not recognized then SunPy will try some
 default FITS keywords and return a `~sunpy.map.GenericMap` but results
 may vary. SunPy can also create maps from the jpg2000 files from
-`helioviewer.org <http://helioviewer.org/>`_.
+`helioviewer.org <https://helioviewer.org/>`_.
 
 Creating Custom Maps
 --------------------
 It is also possible to create maps using custom data (e.g. from a simulation).
-To do this you need to provide `~sunpy.map.map_factory.MapFactory` with both the data array as
-well as some basic meta information. If no header is given then some default
-values as assumed. Here is a simple example::
+To do this you need to provide `sunpy.map.Map <sunpy.map.map_factory.MapFactory>`
+with both the data array as well as some basic meta information. If no header is
+given then some default values are assumed. Here is a simple example::
 
     >>> import numpy as np
+
     >>> data = np.arange(0,100).reshape(10,10)
     >>> header = {'cdelt1': 10, 'cdelt2': 10, 'telescop':'sunpy'}
     >>> my_map = sunpy.map.Map(data, header)
 
-The keys in the header follows the `FITS standard <http://fits.gsfc.nasa.gov/fits_dictionary.html>`_.
+The keys in the header follows the `FITS standard <https://fits.gsfc.nasa.gov/fits_dictionary.html>`_.
 
 Inspecting maps
 ---------------
 A map contains a number of data-associated attributes. To get a quick look at
 your map simply type::
 
-    >>> my_map = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)
-    >>> my_map   # doctest: +NORMALIZE_WHITESPACE
-    SunPy AIAMap
+    >>> my_map = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)  # doctest: +REMOTE_DATA
+    >>> my_map  # doctest: +REMOTE_DATA
+    SunPy Map
     ---------
     Observatory:         SDO
-    Instrument:  AIA 3
-    Detector:    AIA
+    Instrument:      AIA 3
+    Detector:        AIA
     Measurement:         171.0 Angstrom
-    Wavelength:  171.0 Angstrom
-    Obs Date:    2011-03-19 10:54:00
-    dt:          1.999601 s
-    Dimension:   [ 1024.  1024.] pix
-    scale:               [ 2.4  2.4] arcsec / pix
+    Wavelength:      171.0 Angstrom
+    Observation Date:    2011-06-07 06:33:02
+    Exposure Time:       0.234256 s
+    Dimension:       [1024. 1024.] pix
+    Coordinate System:   helioprojective
+    Scale:           [2.402792 2.402792] arcsec / pix
+    Reference Pixel:     [512.5 512.5] pix
+    Reference Coord:     [3.22309951 1.38578135] arcsec
     <BLANKLINE>
-    array([[ 0.3125, -0.0625, -0.125 , ...,  0.625 , -0.625 ,  0.    ],
-           [ 1.    ,  0.1875, -0.8125, ...,  0.625 , -0.625 ,  0.    ],
-           [-1.1875,  0.375 , -0.5   , ..., -0.125 , -0.625 , -1.1875],
+    array([[ -96.,    7.,   -2., ..., -128., -128., -128.],
+           [ -97.,   -5.,    0., ...,  -99., -104., -128.],
+           [ -94.,    1.,   -4., ...,   -5.,  -38., -128.],
            ...,
-           [-0.625 ,  0.0625, -0.3125, ...,  0.125 ,  0.125 ,  0.125 ],
-           [ 0.5625,  0.0625,  0.5625, ..., -0.0625, -0.0625,  0.    ],
-           [ 0.5   , -0.125 ,  0.4375, ...,  0.6875,  0.6875,  0.6875]])
+           [-128., -128., -128., ..., -128., -128., -128.],
+           [-128., -128., -128., ..., -128., -128., -128.],
+           [-128., -128., -128., ..., -128., -128., -128.]], dtype=float32)
 
 
 This will show a representation of the data as well as some of its associated
@@ -93,10 +95,11 @@ attributes. A number of other attributes are also available, for example the
 
 To get a list of all of the attributes check the documentation by typing::
 
-    >>> help(my_map)   # doctest: +SKIP
+    >>> help(my_map)  # doctest: +SKIP
 
-From SunPy version 0.6 many attributes return `~astropy.units.quantity.Quantity`
-objects, please refer to the `astropy.units`.
+Many attributes and functions of the map classes accept and return
+`~astropy.units.quantity.Quantity` or `~astropy.coordinates.SkyCoord` objects,
+please refer to :ref:`units-coordinates-sunpy` for more details.
 
 The meta data for the map is accessed by ::
 
@@ -112,24 +115,24 @@ The data in a SunPy Map object is accessible through the
 NumPy `~numpy.ndarray`, so for example, to get
 the 0th element in the array ::
 
-    >>> my_map.data[0, 0]
-    0.3125
-    >>> my_map.data[0][0]
-    0.3125
+    >>> my_map.data[0, 0]  # doctest: +REMOTE_DATA
+    -96.0
+    >>> my_map.data[0][0]  # doctest: +REMOTE_DATA
+    -96.0
 
 One important fact to remember is that the first
 index is for the y direction while the second index is for the x direction.
 For more information about indexing please refer to the
-`Numpy documentation <http://www.scipy.org/Tentative_NumPy_Tutorial#head-864862d3f2bb4c32f04260fac61eb4ef34788c4c>`_.
+`Numpy documentation <https://docs.scipy.org/doc/numpy-dev/user/quickstart.html#indexing-slicing-and-iterating>`_.
 
 Data attributes like `~numpy.ndarray.dtype` and
 `~sunpy.map.GenericMap.dimensions` are accessible through
 the SunPyGenericMap object ::
 
-    >>> my_map.dimensions
-    Pair(x=<Quantity 1024.0 pix>, y=<Quantity 1024.0 pix>)
-    >>> my_map.dtype
-    dtype('float64')
+    >>> my_map.dimensions  # doctest: +REMOTE_DATA
+    PixelPair(x=<Quantity 1024. pix>, y=<Quantity 1024. pix>)
+    >>> my_map.dtype  # doctest: +REMOTE_DATA
+    dtype('>f4')
 
 Here the dimensions attribute is similar to the `~numpy.ndarray.shape`
 attribute, however returning an `~astropy.units.quantity.Quantity`.
@@ -146,18 +149,18 @@ original data in the map intact make sure to copy it.
 Some basic statistical functions on the data array are also passed through to Map
 objects::
 
-    >>> my_map.min()
-    -2.0
-    >>> my_map.max()
-    9429.125
-    >>> my_map.mean()
-    235.91531443595886
+    >>> my_map.min()  # doctest: +REMOTE_DATA
+    -128.0
+    >>> my_map.max()  # doctest: +REMOTE_DATA
+    192131.0
+    >>> my_map.mean()  # doctest: +REMOTE_DATA
+    427.0214
 
 but you can also access all the other `~numpy.ndarray` functions and attributes
 but accessing the data array directly. For example::
 
-    >>> my_map.data.std()
-    292.43424704677756
+    >>> my_map.data.std()  # doctest: +REMOTE_DATA
+    826.40955
 
 Plotting
 --------
@@ -242,24 +245,26 @@ The Map object chooses the appropriate colormap for you when it is created as
 long as it recognizes the instrument. To see what colormaps are available::
 
     >>> import sunpy.cm
-    >>> sunpy.cm.cmlist.keys()   # doctest: +NORMALIZE_WHITESPACE
-    ['sohoeit304', 'sdoaia211', 'sohoeit195', 'trace1600', 'sdoaia94',
-     'trace284', 'trace1216', 'sdoaia304', 'trace1700', 'yohkohsxtal',
-     'trace195', 'sdoaia335', 'sdoaia1600', 'traceWL', 'stereohi2',
-     'sdoaia193', 'stereohi1', 'rhessi', 'trace171', 'trace1550',
-     'sohoeit284', 'stereocor2', 'hmimag', 'stereocor1', 'sdoaia1700',
-     'yohkohsxtwh', 'sohoeit171', 'hinodexrt', 'sdoaia131', 'sdoaia171',
-     'hinodesotintensity', 'sdoaia4500', 'soholasco3', 'soholasco2']
+    >>> sunpy.cm.cmlist.keys()
+    dict_keys(['sdoaia94', 'sdoaia131', 'sdoaia171', 'sdoaia193', 'sdoaia211',
+    'sdoaia304', 'sdoaia335', 'sdoaia1600', 'sdoaia1700', 'sdoaia4500',
+    'sohoeit171', 'sohoeit195', 'sohoeit284', 'sohoeit304', 'soholasco2',
+    'soholasco3', 'stereocor1', 'stereocor2', 'stereohi1', 'stereohi2',
+    'rhessi', 'yohkohsxtal', 'yohkohsxtwh', 'hinodexrt', 'hinodesotintensity',
+    'trace171', 'trace195', 'trace284', 'trace1216', 'trace1550', 'trace1600',
+    'trace1700', 'traceWL', 'hmimag', 'irissji1330', 'irissji1400',
+    'irissji1600', 'irissji2796', 'irissji2832', 'irissji5000', 'irissjiFUV',
+    'irissjiNUV', 'irissjiSJI_NUV'])
 
 The SunPy colormaps are registered with matplotlib so you can grab them like
 you would any other colormap::
 
-    >>> import matplotlib.pyplot as plt   # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> import sunpy.cm
 
 You need to import sunpy.cm or sunpy.map for this to work::
 
-    >>> cmap = plt.get_cmap('sdoaia171')   # doctest: +SKIP
+    >>> cmap = plt.get_cmap('sdoaia171')
 
 
 The following plot shows off all of the colormaps.
@@ -292,7 +297,7 @@ do so as follows.
 
 or you can just change the colormap for the map itself as follows::
 
-    >>> smap.plot_settings['cmap'] = plt.get_cmap('sohoeit171')   # doctest: +SKIP
+    >>> smap.plot_settings['cmap'] = plt.get_cmap('sohoeit171')  # doctest: +SKIP
 
 The normalization is also set automatically and is chosen so that all the
 data from minimum to maximum is displayed as best as possible for most cases.
@@ -338,17 +343,17 @@ this kind of data in plots without altering the data is to clip it. This can be 
 very easily when initializing the normalization variable. For example::
 
     >>> import matplotlib.colors as colors
-    >>> norm = colors.Normalize(vmin=smap.min(), vmax=smap.mean() + 3 *smap.std())   # doctest: +SKIP
+    >>> norm = colors.Normalize(vmin=smap.min(), vmax=smap.mean() + 3 *smap.std())  # doctest: +SKIP
 
 This clips out many of the brightest pixels. If you'd like to see what areas of
 your images got clipped set the following values::
 
-    >>> cmap = cmap.plot_settings['cmap']   # doctest: +SKIP
-    >>> cmap.set_over('red', 1.0)   # doctest: +SKIP
-    >>> cmap.set_under('green', 1.0)   # doctest: +SKIP
+    >>> cmap = cmap.plot_settings['cmap']  # doctest: +SKIP
+    >>> cmap.set_over('red', 1.0)  # doctest: +SKIP
+    >>> cmap.set_under('green', 1.0)  # doctest: +SKIP
 
 This will color the areas above and below in red and green respectively
-(similar to this `example <http://matplotlib.org/examples/pylab_examples/image_masked.html>`_).
+(similar to this `example <https://matplotlib.org/examples/pylab_examples/image_masked.html>`_).
 You can use the following colorbar command to display these choices::
 
     >>> plt.colorbar(extend='both')   # doctest: +SKIP
@@ -495,18 +500,18 @@ addition of an associated boolean array which holds the mask.
 Composite Maps and Overlaying Maps
 ----------------------------------
 
-The `Map()` method described above can also handle a list of maps. If a series of maps
-are supplied as inputs, `Map()` will return a list of maps as the output.  However,
+The `Map <sunpy.map.map_factory.MapFactory>` method described above can also handle a list of maps. If a series of maps
+are supplied as inputs, `Map <sunpy.map.map_factory.MapFactory>` will return a list of maps as the output.  However,
 if the 'composite' keyword is set to True, then a `~sunpy.map.CompositeMap` object is
 returned.  This is useful if the maps are of a different type (e.g. different
 instruments).  For example, to create a simple composite map::
 
-    >>> my_maps = sunpy.map.Map(sunpy.data.sample.EIT_195_IMAGE, sunpy.data.sample.RHESSI_IMAGE, composite=True)
+    >>> my_maps = sunpy.map.Map(sunpy.data.sample.EIT_195_IMAGE, sunpy.data.sample.RHESSI_IMAGE, composite=True)  # doctest: +REMOTE_DATA
 
 A `~sunpy.map.CompositeMap` is different from a regular SunPy `~sunpy.map.GenericMap` object and therefore
 different associated methods. To list which maps are part of your composite map use::
 
-    >>> my_maps.list_maps()
+    >>> my_maps.list_maps()  # doctest: +REMOTE_DATA
     [<class 'sunpy.map.sources.soho.EITMap'>, <class 'sunpy.map.sources.rhessi.RHESSIMap'>]
 
 The following code adds a new map (which must be instantiated first), sets
@@ -535,7 +540,7 @@ functionality that a scientist would want therefore a map also contains a number
 of map-specific methods such as resizing a map or grabbing a subview. To get
 a list of the methods available for a map type::
 
-    >>> help(my_map)   # doctest: +SKIP
+    >>> help(my_map)  # doctest: +SKIP
 
 and check out the methods section!
 
@@ -545,9 +550,9 @@ A `~sunpy.map.MapCube` is an ordered list of maps.  By default, the maps are ord
 their observation date, from earlier maps to later maps. A `~sunpy.map.MapCube` can be
 created by supplying multiple existing maps::
 
-    >>> map1 = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)
-    >>> map2 = sunpy.map.Map(sunpy.data.sample.EIT_195_IMAGE)
-    >>> mc = sunpy.map.Map([map1, map2], cube=True)
+    >>> map1 = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)  # doctest: +REMOTE_DATA
+    >>> map2 = sunpy.map.Map(sunpy.data.sample.EIT_195_IMAGE)  # doctest: +REMOTE_DATA
+    >>> mc = sunpy.map.Map([map1, map2], cube=True)  # doctest: +REMOTE_DATA
 
 or by providing a directory full of image files::
 
@@ -561,7 +566,7 @@ list::
 Mapcubes can hold maps that have different shapes.  To test if all the
 maps in a `~sunpy.map.MapCube` have the same shape::
 
-    >>> mc.all_maps_same_shape()
+    >>> mc.all_maps_same_shape()  # doctest: +REMOTE_DATA
     True
 
 It is often useful to return the image data in a `~sunpy.map.MapCube` as a single
@@ -603,7 +608,7 @@ To coalign a `~sunpy.map.MapCube`, simply import
 the function and apply it to your `~sunpy.map.MapCube`::
 
     >>> from sunpy.image.coalignment import mapcube_coalign_by_match_template
-    >>> coaligned = mapcube_coalign_by_match_template(mc)
+    >>> coaligned = mapcube_coalign_by_match_template(mc)  # doctest: +REMOTE_DATA
 
 This will return a new `~sunpy.map.MapCube`, coaligned to a template extracted from the
 center of the first map in the `~sunpy.map.MapCube`, with the map dimensions clipped as
@@ -618,7 +623,7 @@ If you just want to calculate the shifts required to compensate for solar
 rotation relative to the first map in the `~sunpy.map.MapCube` without applying them, use::
 
     >>> from sunpy.image.coalignment import calculate_match_template_shift
-    >>> shifts = calculate_match_template_shift(mc)
+    >>> shifts = calculate_match_template_shift(mc)  # doctest: +REMOTE_DATA
 
 This is the function used to calculate the shifts in `~sunpy.map.MapCube` coalignment
 function above.  Please see `~sunpy.image.coalignment.calculate_match_template_shift` to learn more about its features.
@@ -653,7 +658,7 @@ To apply this form of solar derotation to a `~sunpy.map.MapCube`, simply import 
 function and apply it to your `~sunpy.map.MapCube`::
 
     >>> from sunpy.physics.transforms.solar_rotation import mapcube_solar_derotate
-    >>> derotated = mapcube_solar_derotate(mc)
+    >>> derotated = mapcube_solar_derotate(mc)  # doctest: +REMOTE_DATA
 
 For more info see `~sunpy.physics.transforms.solar_rotation.mapcube_solar_derotate`.
 
@@ -661,7 +666,7 @@ If you just want to calculate the shifts required to compensate for solar
 rotation relative to the first map in the `~sunpy.map.MapCube` without applying them, use::
 
     >>> from sunpy.physics.transforms.solar_rotation import calculate_solar_rotate_shift
-    >>> shifts = calculate_solar_rotate_shift(mc)
+    >>> shifts = calculate_solar_rotate_shift(mc)  # doctest: +REMOTE_DATA
 
 Please consult the docstring of the `~sunpy.image.coalignment.mapcube_coalign_by_match_template` function in order to learn about
 the features of this function.

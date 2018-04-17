@@ -4,6 +4,8 @@ Author: `Keith Hughitt <keith.hughitt@nasa.gov>`
 """
 from __future__ import absolute_import, print_function, division
 
+import numpy as np
+
 import matplotlib.pyplot as plt
 
 import astropy.units as u
@@ -56,7 +58,7 @@ class CompositeMap(object):
         Set the plot settings for a map with the CompositeMap.
     set_zorder(index, zorder)
         Set the layering preference (z-order) for a map within the CompositeMap.
-    plot(figure=None, overlays=None, draw_limb=False, gamma=1.0,
+    plot(figure=None, overlays=None, draw_limb=False,
     draw_grid=False, colorbar=True, basic_plot=False,title="SunPy Plot",
     matplot_args)
         Plots the composite map object using matplotlib
@@ -64,12 +66,12 @@ class CompositeMap(object):
     Examples
     --------
     >>> import sunpy.map
-    >>> import sunpy.data.sample
+    >>> import sunpy.data.sample  # doctest: +REMOTE_DATA
     >>> comp_map = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE,
     ...                          sunpy.data.sample.EIT_195_IMAGE,
-    ...                          composite=True)
-    >>> comp_map.add_map(sunpy.map.Map(sunpy.data.sample.RHESSI_IMAGE))
-    >>> comp_map.peek()   # doctest: +SKIP
+    ...                          composite=True)  # doctest: +REMOTE_DATA
+    >>> comp_map.add_map(sunpy.map.Map(sunpy.data.sample.RHESSI_IMAGE))  # doctest: +REMOTE_DATA
+    >>> comp_map.peek()  # doctest: +SKIP
 
     """
     def __init__(self, *args, **kwargs):
@@ -221,7 +223,9 @@ class CompositeMap(object):
             The index of the map in the composite map.
 
         alpha : `float`
-            A float in the range 0 to 1.
+            A float in the range 0 to 1.  Increasing values of alpha decrease
+            the transparency of the layer (0 is complete transparency, 1
+            indicates the layer will be completely opaque).
 
         Returns
         -------
@@ -326,7 +330,8 @@ class CompositeMap(object):
 
         index_check = hasattr(self._maps[index], 'rsun_obs')
         if not index_check or index is None:
-            raise ValueError("Specified index does not have all the required attributes to draw limb.")
+            raise ValueError("Specified index does not have all"
+                             " the required attributes to draw limb.")
 
         return self._maps[index].draw_limb(axes=axes, **kwargs)
 
@@ -363,7 +368,8 @@ class CompositeMap(object):
 
         index_check = all([hasattr(self._maps[index], k) for k in needed_attrs])
         if not index_check or index is None:
-            raise ValueError("Specified index does not have all the required attributes to draw grid.")
+            raise ValueError("Specified index does not have all"
+                             " the required attributes to draw grid.")
 
         ax = self._maps[index].draw_grid(axes=axes, grid_spacing=grid_spacing, **kwargs)
         return ax
@@ -405,7 +411,6 @@ class CompositeMap(object):
                                                    self._maps[0].spatial_units[0]))
             axes.set_ylabel(axis_labels_from_ctype(self._maps[0].coordinate_system[1],
                                                    self._maps[0].spatial_units[1]))
-
             axes.set_title(title)
 
         # Define a list of plotted objects
@@ -413,9 +418,13 @@ class CompositeMap(object):
         # Plot layers of composite map
         for m in self._maps:
             # Parameters for plotting
+            bl = m._get_lon_lat(m.bottom_left_coord)
+            tr = m._get_lon_lat(m.top_right_coord)
+            x_range = list(u.Quantity([bl[0], tr[0]]).to(m.spatial_units[0]).value)
+            y_range = list(u.Quantity([bl[1], tr[1]]).to(m.spatial_units[1]).value)
             params = {
                 "origin": "lower",
-                "extent": list(m.xrange.value) + list(m.yrange.value),
+                "extent": x_range + y_range,
                 "cmap": m.plot_settings['cmap'],
                 "norm": m.plot_settings['norm'],
                 "alpha": m.alpha,
@@ -423,14 +432,22 @@ class CompositeMap(object):
             }
             params.update(matplot_args)
 
+            # The request to show a map layer rendered as a contour is indicated by a
+            # non False levels property.  If levels is False, then the layer is
+            # rendered using imshow.
             if m.levels is False:
-                ret.append(axes.imshow(m.data, **params))
+                # Check for the presence of masked map data
+                if m.mask is None:
+                    ret.append(axes.imshow(m.data, **params))
+                else:
+                    ret.append(axes.imshow(np.ma.array(np.asarray(m.data), mask=m.mask), **params))
+            else:
+                # Check for the presence of masked map data
+                if m.mask is None:
+                    ret.append(axes.contour(m.data, m.levels, **params))
+                else:
+                    ret.append(axes.contour(np.ma.array(np.asarray(m.data), mask=m.mask), m.levels, **params))
 
-            # Use contour for contour data, and imshow otherwise
-            if m.levels is not False:
-                # Set data with values <= 0 to transparent
-                # contour_data = np.ma.masked_array(m, mask=(m <= 0))
-                ret.append(axes.contour(m.data, m.levels, **params))
                 # Set the label of the first line so a legend can be created
                 ret[-1].collections[0].set_label(m.name)
 

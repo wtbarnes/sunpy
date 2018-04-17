@@ -79,12 +79,6 @@ def test_on_frame_error2():
         Helioprojective(obstime=17263871263)
 
 
-def test_array():
-    input = Time(['2012-01-01 00:00:00', '2012-01-01 00:00:05'])
-    with pytest.raises(ValueError):
-        Helioprojective(obstime=input)
-
-
 # ObserverCoordinateAttribute
 
 
@@ -172,13 +166,13 @@ of observer is correctly calculated.
 
 def test_default_observer_transform_hcc():
     center = frames.HeliographicStonyhurst(0 * u.deg, 0 * u.deg, obstime="2017-07-11 15:00")
-    hpc = center.transform_to(frames.Heliocentric)
+    hpc = center.transform_to(frames.Heliocentric(obstime="2017-07-11 15:00"))
 
     assert_quantity_allclose(hpc.y, -48471.1283979 * u.km)
 
 
 def test_default_observer_transform_hpc():
     center = frames.HeliographicStonyhurst(0 * u.deg, 0 * u.deg, obstime="2017-07-11 15:00")
-    hpc = center.transform_to(frames.Helioprojective)
+    hpc = center.transform_to(frames.Helioprojective(obstime="2017-07-11 15:00"))
 
     assert_quantity_allclose(hpc.Ty, -66.04425197 * u.arcsec)

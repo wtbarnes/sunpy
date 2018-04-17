@@ -1,10 +1,12 @@
+.. _docs_guidelines:
+
 Documentation
 =============
 
 All code must be documented. Undocumented code will not be accepted into SunPy.
 Documentation should follow the guidelines in `PEP 8
-<http://www.python.org/dev/peps/pep-0008/>`_ and `PEP 257 (Docstring
-conventions) <http://www.python.org/dev/peps/pep-0257/>`_. Documentation for
+<https://www.python.org/dev/peps/pep-0008/>`_ and `PEP 257 (Docstring
+conventions) <https://www.python.org/dev/peps/pep-0257/>`_. Documentation for
 modules, classes, and functions should follow the `NumPy/SciPy documentation
 style guide
 <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_.
@@ -16,7 +18,7 @@ guidelines.
 Sphinx
 ------
 
-`Sphinx <http://sphinx.pocoo.org/>`_ is a tool for generating high-quality
+`Sphinx <http://www.sphinx-doc.org/en/stable/>`_ is a tool for generating high-quality
 documentation in various formats (HTML, pdf, etc) and is especially well-suited
 for documenting Python projects. Sphinx works by parsing files written using a
 `a Mediawiki-like syntax
@@ -24,13 +26,13 @@ for documenting Python projects. Sphinx works by parsing files written using a
 `reStructuredText <http://docutils.sourceforge.net/rst.html>`_. In addition
 to parsing static files of reStructuredText, Sphinx can also be told to parse
 code comments. In fact, in addition to what you are reading right now, the
-`Python documentation <http://www.python.org/doc/>`_ was also created using
+`Python documentation <https://www.python.org/doc/>`_ was also created using
 Sphinx.
 
 Usage
 #####
 
-All of the SunPy documentation is contained in the ``doc/source`` folder and
+All of the SunPy documentation is contained in the ``docs`` folder and
 code comments. The examples from the example gallery can be found in
 ``examples``. To build the documentation locally you must have Sphinx
 (as well as Numpydoc, astropy-helpers, and sphinx-gallery) installed on
@@ -45,7 +47,7 @@ iteratively only adding things that have changed. If you'd like to start
 from scratch then just delete the build directory.
 
 For more information on how to use Sphinx, consult the `Sphinx documentation
-<http://sphinx.pocoo.org/contents.html>`_.
+<http://www.sphinx-doc.org/en/stable/contents.html>`_.
 
 The rest of this section will describe how to document the SunPy code in order
 to guarantee well-formatted documentation.
@@ -54,7 +56,7 @@ doctest
 #######
 
 The example codes in the Guide section of the docs are configured with the Sphinx
-`doctest extension <http://sphinx-doc.org/ext/doctest.html>`_.
+`doctest extension <http://www.sphinx-doc.org/en/stable/ext/doctest.html>`_.
 This will test the example code to make sure it runs correctly, it can be executed
 using: ::
 
@@ -89,78 +91,82 @@ perform function argument unit checks.  The decorator ensures that the
 units of the input to the function are convertible to that specified
 by the decorator, for example ::
 
-    import astropy.units as u
-    @u.quantity_input(myangle=u.arcsec)
-    def myfunction(myangle):
-        return myangle**2
+    >>> import astropy.units as u
+    >>> @u.quantity_input(myangle=u.arcsec)
+    ... def myfunction(myangle):
+    ...     return myangle**2
 
 This function only accepts arguments that are convertible to arcseconds.
 Therefore, ::
 
     >>> myfunction(20 * u.degree)
-    <Quantity 400.0 deg2>
+    <Quantity 400. deg2>
 
 returns the expected answer but ::
 
     >>> myfunction(20 * u.km)
+    Traceback (most recent call last):
+    ...
+    astropy.units.core.UnitsError: Argument 'myangle' to function 'myfunction' must be in units convertible to 'arcsec'.
 
 raises an error.
 
 The following is an example of a use-facing function that returns the area of a
 square, in units that are the square of the input length unit::
 
-    @u.quantity_input(side_length=u.m)
-    def get_area_of_square(side_length):
-        """
-        Compute the area of a square.
-
-        Parameters
-        ----------
-        side_length : `~astropy.units.quantity.Quantity`
-            Side length of the square
-
-        Returns
-        -------
-        area : `~astropy.units.quantity.Quantity`
-            Area of the square.
-        """
-
-        return (side_length ** 2)
+    >>> @u.quantity_input(side_length=u.m)
+    ... def get_area_of_square(side_length):
+    ...     """
+    ...     Compute the area of a square.
+    ...
+    ...     Parameters
+    ...     ----------
+    ...     side_length : `~astropy.units.quantity.Quantity`
+    ...         Side length of the square
+    ...
+    ...     Returns
+    ...     -------
+    ...     area : `~astropy.units.quantity.Quantity`
+    ...         Area of the square.
+    ...     """
+    ...
+    ...     return (side_length ** 2)
 
 This more advanced example shows how a private function that does not accept
 quantities can be wrapped by a function that does::
 
-    @u.quantity_input(side_length=u.m)
-    def some_function(length):
-        """
-        Does something useful.
-
-        Parameters
-        ----------
-        length : `~astropy.units.quantity.Quantity`
-            A length.
-
-        Returns
-        -------
-        length : `~astropy.units.quantity.Quantity`
-            Another length
-        """
-
-        # the following function either
-        # a] does not accept Quantities
-        # b] is slow if using Quantities
-        result = _private_wrapper_function(length.convert('meters').value)
-
-        # now convert back to a quantity
-        result = Quantity(result_meters, units_of_the_private_wrapper_function)
-
-        return result
+    >>> @u.quantity_input(side_length=u.m)
+    ... def some_function(length):
+    ...     """
+    ...     Does something useful.
+    ...
+    ...     Parameters
+    ...     ----------
+    ...     length : `~astropy.units.quantity.Quantity`
+    ...         A length.
+    ...
+    ...     Returns
+    ...     -------
+    ...     length : `~astropy.units.quantity.Quantity`
+    ...         Another length
+    ...     """
+    ...
+    ...     # the following function either
+    ...     # a] does not accept Quantities
+    ...     # b] is slow if using Quantities
+    ...     result = _private_wrapper_function(length.convert('meters').value)
+    ...
+    ...     # now convert back to a quantity
+    ...     result = Quantity(result_meters, units_of_the_private_wrapper_function)
+    ...
+    ...     return result
 
 In this example, the non-user facing function *_private_wrapper_function* requires a numerical input in units of
 meters, and returns a numerical output.  The developer knows that the result of *_private_wrapper_function* is in the
 units *units_of_the_private_wrapper_function*, and sets the result of *some_function* to return the answer in those
 units.
 
+.. doctest-skip-all
 
 Examples
 --------
@@ -239,8 +245,8 @@ Example (:class:`sunpy.map.Map`) ::
 
     Examples
     --------
-    >>> aia = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)
-    >>> aia.T
+    >>> aia = sunpy.map.Map(sunpy.data.sample.AIA_171_IMAGE)   # doctest: +REMOTE_DATA
+    >>> aia.T   # doctest: +REMOTE_DATA
     Map([[ 0.3125,  1.    , -1.1875, ..., -0.625 ,  0.5625,  0.5   ],
     [-0.0625,  0.1875,  0.375 , ...,  0.0625,  0.0625, -0.125 ],
     [-0.125 , -0.8125, -0.5   , ..., -0.3125,  0.5625,  0.4375],
@@ -248,12 +254,12 @@ Example (:class:`sunpy.map.Map`) ::
     [ 0.625 ,  0.625 , -0.125 , ...,  0.125 , -0.0625,  0.6875],
     [-0.625 , -0.625 , -0.625 , ...,  0.125 , -0.0625,  0.6875],
     [ 0.    ,  0.    , -1.1875, ...,  0.125 ,  0.    ,  0.6875]])
-    >>> aia.header['cunit1']
+    >>> aia.header['cunit1']   # doctest: +REMOTE_DATA
     'arcsec'
-    >>> aia.show()
-    >>> import matplotlib.cm as cm
-    >>> import matplotlib.colors as colors
-    >>> aia.peek(cmap=cm.hot, norm=colors.Normalize(1, 2048))
+    >>> aia.show()  # doctest: +REMOTE_DATA
+    >>> import matplotlib.cm as cm  # doctest: +REMOTE_DATA
+    >>> import matplotlib.colors as colors  # doctest: +REMOTE_DATA
+    >>> aia.peek(cmap=cm.hot, norm=colors.Normalize(1, 2048))  # doctest: +REMOTE_DATA
 
     See Also
     --------
@@ -263,7 +269,7 @@ Example (:class:`sunpy.map.Map`) ::
     ----------
     | http://docs.scipy.org/doc/numpy/reference/arrays.classes.html
     | http://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-    | http://www.scipy.org/Subclasses
+    | https://www.scipy.org/Subclasses
 
     """
 

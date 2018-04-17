@@ -31,8 +31,8 @@ To create the sample `sunpy.timeseries.sources.goes.XRSTimeSeries` type the
 following into your interactive Python shell: ::
 
     >>> import sunpy.timeseries as ts
-    >>> import sunpy.data.sample
-    >>> my_timeseries = ts.TimeSeries(sunpy.data.sample.GOES_XRS_TIMESERIES, source='XRS')
+    >>> import sunpy.data.sample  # doctest: +REMOTE_DATA
+    >>> my_timeseries = ts.TimeSeries(sunpy.data.sample.GOES_XRS_TIMESERIES, source='XRS')  # doctest: +REMOTE_DATA
 
 This is calling the `~sunpy.timeseries.TimeSeries` factory to create a time
 series from a GOES XRS FITS file. The TimeSeries factory uses `sunpy.io.fits` to
@@ -71,7 +71,7 @@ factory to work as intended.
 You can create a single time series from multiple files for a given source using
 the keyword argument ``concatenate=True``, such as:
 
-    >>> my_timeseries = ts.TimeSeries('/mydirectory/myts1.fits', '/mydirectory/myts2.fits', source='XRS', concatenate=True)   # doctest: +SKIP
+    >>> my_timeseries = ts.TimeSeries('/mydirectory/myts1.fits', '/mydirectory/myts2.fits', source='XRS', concatenate=True)  # doctest: +SKIP
 
 Note these must all be from the same source if using
 `~sunpy.timeseries.TimeSeriesBase.concatenate` from within the TimeSeries
@@ -100,7 +100,7 @@ it into a TimeSeries object: ::
 
 The first line imports the numpy module used to create and store the data.
 The second line creates a basic numpy array of values representing a sine wave.
-We can use this array along with a suitable time storing object (such as AstroPy
+We can use this array along with a suitable time storing object (such as Astropy
 `~astropy.time` or a list of `datetime` objects) to make a Pandas
 `~pandas.core.frame.DataFrame`.  A suitable list of times must contain the same
 number of values as the data, this can be created using: ::
@@ -129,15 +129,15 @@ by sending them as arguments to the factory: ::
     >>> units = OrderedDict([('intensity', u.W/u.m**2)])
     >>> ts_custom = ts.TimeSeries(data, meta, units)
 
-2.2 Creating Custom TimeSeries from an AstroPy Table
+2.2 Creating Custom TimeSeries from an Astropy Table
 ----------------------------------------------------
 
 A Pandas `~pandas.core.frame.DataFrame` is the underlying object used to store
 the data within a TimeSeries, so the above example is the most lightweight to
 create a custom TimeSeries, but being scientific data it will often be more
-convenient to use an AstroPy `~astropy.table.table.Table` and let the factory
+convenient to use an Astropy `~astropy.table.table.Table` and let the factory
 convert this.  An advantage of this method is it allows you to include metadata
-and AstroPy `~astropy.units.quantity.Quantity` values, which are both supported
+and Astropy `~astropy.units.quantity.Quantity` values, which are both supported
 in tables, without additional arguments.  For example: ::
 
     >>> import datetime
@@ -155,7 +155,7 @@ in tables, without additional arguments.  For example: ::
 
 Note that due to the properties of the `~astropy.time.Time` object, this will be
 a mixin column which since it is a single object, limits the versatility of
-the `~astropy.table.Table` a little. For more on mixin columns see the `AstroPy
+the `~astropy.table.Table` a little. For more on mixin columns see the `Astropy
 docs <http://docs.astropy.org/en/stable/table/mixin_columns.html>`_.  The units
 will be taken from the table quantities for each column, the metadata will
 simply be the table.meta dictionary.  You can also explicitly add metadata and
@@ -191,25 +191,35 @@ the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.data` attribute.  The
 data is implemented as a Pandas `~pandas.DataFrame`, so to get a look at what
 data you have available use: ::
 
-    >>> my_timeseries.data
+    >>> my_timeseries.data  # doctest: +SKIP
 
 You can also get a quick overview of that data using: ::
 
     >>> my_timeseries.data.info()
+    <class 'pandas.core.frame.DataFrame'>
+    DatetimeIndex: 42177 entries, 2011-06-06 23:59:59.961999 to 2011-06-07 23:59:57.631999
+    Data columns (total 2 columns):
+    xrsa    42177 non-null float32
+    xrsb    42177 non-null float32
+    dtypes: float32(2)
+    memory usage: 659.0 KB
 
 Time series are columnar data so to get at a particular datum you need to
 first index the column, then the element you want. To get the names of the
 available columns: ::
 
     >>> my_timeseries.data.columns
+    Index(['xrsa', 'xrsb'], dtype='object')
 
 You can access the 0th element in the column `xrsa` with: ::
 
     >>> my_timeseries.data['xrsa'][0]
+    1e-09
 
 You can also grab all of the data at a particular time: ::
 
-    >>> my_timeseries.data['xrsa']['2012-06-01 00:00']
+    >>> my_timeseries.data['xrsa']['2011-06-07 00:00:02.008999']
+    1e-09
 
 This will return a list of entries with times that match the accuracy of the time
 you provide. You can consider the data as x or y values: ::
@@ -220,7 +230,7 @@ you provide. You can consider the data as x or y values: ::
 You can read more about indexing at the `pandas documentation website
 <http://pandas.pydata.org/pandas-docs/stable/>`_.
 
-A TimeSeries can also return an AstroPy `~astropy.units.quantity.Quantity` for a
+A TimeSeries can also return an Astropy `~astropy.units.quantity.Quantity` for a
 given column using the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.quantity`
 method, this uses the values stored in the data and units stored in the units
 dictionary to determine the `~astropy.units.quantity.Quantity`: ::
@@ -248,7 +258,7 @@ provides a more general plot.  Note that `~sunpy.timeseries.timeseriesbase.Gener
 returns a `matplotlib.figure.Figure` object, if you want to save this to a PNG
 file you can use the `savefig` method:
 
-    >>> fig.savefig('figure.png')
+    >>> fig.savefig('figure.png')  # doctest: +SKIP
 
 In addition, to enable users to modify the plot it is possible to grab the
 matplotlib axes object by using the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.plot`
@@ -283,13 +293,14 @@ can read the `pandas documentation website <http://pandas.pydata.org/pandas-docs
 
 Additionally the TimeSeries provides the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.add_column`
 method which will either add a new column or update a current column if the
-colname is already present. This can take numpy array or preferably an AstroPy
+colname is already present. This can take numpy array or preferably an Astropy
 `~astropy.units.quantity.Quantity` value.  For example: ::
 
-    >>> values = u.Quantity(my_timeseries.data['xrsa'].values, my_timeseries.units['xrsa']) * 1000
-    >>> my_timeseries.add_column('new col', values)
+    >>> values = u.Quantity(my_timeseries.data['xrsa'].values[:-2], my_timeseries.units['xrsa']) * 20.5
+    >>> my_timeseries.add_column('new col', values)  # doctest: +ELLIPSIS
+    <sunpy.timeseries.sources.goes.XRSTimeSeries object at ...>
 
-Note that the values will be converted into the column units if an AstroPy
+Note that the values will be converted into the column units if an Astropy
 `~astropy.units.quantity.Quantity` is given. Caution should be taken when adding
 a new column because this column won't have any associated MetaData entry,
 similarly if you use an array of values it won't add an entry into the units
@@ -316,7 +327,7 @@ for example taking every 2nd value from 0 to 10000 can be done using: ::
     >>> my_timeseries_trunc = my_timeseries.truncate(0,100000,2)
 
 Caution should be used when removing values from the data manually, the
-TimeSeries can't guarantee AstroPy units are correctly preserved when you
+TimeSeries can't guarantee Astropy units are correctly preserved when you
 interact with the data directly.
 
 5.3 Down and Up Sampling a TimeSeries Using Pandas
@@ -327,7 +338,6 @@ can manipulate it using normal Pandas methods, such as the `~pandas.DataFrame.re
 method.  To downsample you can use: ::
 
     >>> downsampled_dataframe = my_timeseries_trunc.data.resample('10T').mean()
-    >>> downsampled_timeseries = sunpy.timeseries.TimeSeries(downsampled_dataframe, my_timeseries_trunc.meta, my_timeseries_trunc.units) # ToDo: Fix this!
 
 Note, here ``10T`` means sample every 10 minutes and 'mean' is the method used
 to combine the data. Alternatively the sum method is often used.
@@ -337,7 +347,7 @@ You can also upsample, such as: ::
 
 Note, here we upsample to 30 second intervals using ``30S`` and use the pandas
 fill-forward method. Alternatively the back-fill method could be used.  Caution
-should be used when resampling the data, the TimeSeries can't guarantee AstroPy
+should be used when resampling the data, the TimeSeries can't guarantee Astropy
 Units are correctly preserved when you interact with the data directly.
 
 5.4 Concatenating TimeSeries
@@ -350,14 +360,14 @@ GOES data to get a week or more of constant data in one TimeSeries.  This can be
 performed using the TimeSeries factory with the ``concatenate=True``
 keyword argument: ::
 
-    >>> concatenated_timeseries = sunpy.timeseries.TimeSeries(filepath1, filepath2, source='XRS', concatenate=True)
+    >>> concatenated_timeseries = sunpy.timeseries.TimeSeries(filepath1, filepath2, source='XRS', concatenate=True)  # doctest: +SKIP
 
 Note, you can list any number of files, or a folder or use a glob to select the
 input files to be concatenated.  It is possible to concatenate two TimeSeries
 after creating them with the factory using the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.concatenate`
 method.  For example: ::
 
-    >>> concatenated_timeseries = goes_timeseries_1.concatenate(goes_timeseries_2)
+    >>> concatenated_timeseries = goes_timeseries_1.concatenate(goes_timeseries_2)  # doctest: +SKIP
 
 This will result in a TimeSeries identical to if you used the factory to create
 it in one step.  A limitation of the TimeSeries class is that often it is not
@@ -369,39 +379,65 @@ To do this you can still use the `~sunpy.timeseries.timeseriesbase.GenericTimeSe
 method, which will create a new TimeSeries with all the rows and columns of the
 source and concatenated TimeSeries in one: ::
 
-    >>> concatenated_timeseries = goes_timeseries.concatenate(eve_timeseries)
+    >>> concatenated_timeseries = goes_timeseries.concatenate(eve_timeseries)  # doctest: +SKIP
 
 Note that the more complex `~sunpy.timeseries.metadata.TimeSeriesMetaData`
 object now has 2 entries and shows details on both: ::
 
-    >>> concatenated_timeseries.meta
+    >>> concatenated_timeseries.meta  # doctest: +SKIP
 
 The metadata object is described in more detail in the next section.
 
-5.5 Creating an AstroPy Table from a TimeSeries
+
+5.5 Creating an Astropy Table from a TimeSeries
 -----------------------------------------------
 
 If you want to take the data from your TimeSeries and use it as a `~astropy.table.table.Table`
 this can be done using the `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.to_table`
 method.  For example: ::
 
-    >>> table = my_timeseries.to_table()
+    >>> table = my_timeseries_trunc.to_table()
 
 Note that this `~astropy.table.table.Table` will contain a mixin column for
-containing the AstroPy `~astropy.time.core.Time` object representing the index,
+containing the Astropy `~astropy.time.core.Time` object representing the index,
 it will also add the relevant units to the columns. One of the most useful
-reasons for doing this is that AstroPy `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.to_table`
+reasons for doing this is that Astropy `~sunpy.timeseries.timeseriesbase.GenericTimeSeries.to_table`
 objects have some very nice options for viewing the data, including the basic
 console view: ::
 
     >>> table
+    <Table length=21089>
+                 date               xrsa     xrsb
+                                   W / m2   W / m2
+            datetime64[ns]        float32  float32
+    ----------------------------- ------- ----------
+    2011-06-06T23:59:59.961999000     0.1 1.8871e-07
+    2011-06-07T00:00:04.058999000   1e-09 1.8609e-07
+    2011-06-07T00:00:08.151999000   1e-09 1.8609e-07
+    2011-06-07T00:00:12.248999000   1e-09 1.8609e-07
+    2011-06-07T00:00:16.344999000   1e-09 1.8084e-07
+    2011-06-07T00:00:20.441999000   1e-09 1.8084e-07
+    2011-06-07T00:00:24.534999000   1e-09 1.8084e-07
+    2011-06-07T00:00:28.631999000   1e-09 1.8346e-07
+    2011-06-07T00:00:32.728999000   1e-09 1.8346e-07
+                              ...     ...        ...
+    2011-06-07T23:59:20.768999000   1e-09  1.651e-07
+    2011-06-07T23:59:24.864999000   1e-09 1.5985e-07
+    2011-06-07T23:59:28.961999000   1e-09 1.5985e-07
+    2011-06-07T23:59:33.058999000   1e-09 1.6248e-07
+    2011-06-07T23:59:37.151999000   1e-09 1.6248e-07
+    2011-06-07T23:59:41.248999000   1e-09 1.5985e-07
+    2011-06-07T23:59:45.344999000   1e-09 1.5723e-07
+    2011-06-07T23:59:49.441999000   1e-09 1.6248e-07
+    2011-06-07T23:59:53.538999000   1e-09 1.5985e-07
+    2011-06-07T23:59:57.631999000   1e-09 1.5985e-07
 
 and the more sophisticated browser view using the `~astropy.table.table.Table.show_in_browser`
 method: ::
 
-    >>> table.show_in_browser(jsviewer=True)
+    >>> table.show_in_browser(jsviewer=True)  # doctest: +SKIP
 
-For further details about editing AstroPy tables you can read the `astropy
+For further details about editing Astropy tables you can read the `astropy
 documentation website <http://docs.astropy.org/en/stable/table/>`_.
 
 
@@ -422,6 +458,22 @@ You can easily get an overview of the metadata, this will show you a basic
 representation of the metadata entries that are relevant to this TimeSeries. ::
 
     >>> meta
+    |-------------------------------------------------------------------------------------------------|
+    |TimeRange                  | Columns         | Meta                                              |
+    |-------------------------------------------------------------------------------------------------|
+    |2011-06-06 23:59:59.961999 | xrsa            | simple: True                                      |
+    |            to             | xrsb            | bitpix: 8                                         |
+    |2011-06-07 23:59:57.631999 |                 | naxis: 0                                          |
+    |                           |                 | extend: True                                      |
+    |                           |                 | date: 26/06/2012                                  |
+    |                           |                 | numext: 3                                         |
+    |                           |                 | telescop: GOES 15                                 |
+    |                           |                 | instrume: X-ray Detector                          |
+    |                           |                 | object: Sun                                       |
+    |                           |                 | origin: SDAC/GSFC                                 |
+    |                           |                 | ...                                               |
+    |-------------------------------------------------------------------------------------------------|
+    <BLANKLINE>
 
 The data within a `~sunpy.timeseries.metadata.TimeSeriesMetaData` object is
 stored as a list of tuples, each tuple representing the metadata from a source
@@ -474,10 +526,11 @@ just the relevant `~sunpy.util.metadata.MetaDict` objects.  For example: ::
 
     >>> tsmd_return = my_timeseries.meta.find(colname='xrsa', time='2012-06-01 00:00:33.904999')
     >>> tsmd_return.metas
+    []
 
 Note, the colname and time filters are optional, but omitting both filters just
 returns an identical `~sunpy.timeseries.metadata.TimeSeriesMetaData` object to
-the TimeSeries original.  A common use case for the metadata is to find out the
+the TimeSeries original. A common use case for the metadata is to find out the
 instrument/s that gathered the data and in this case you can use the
 `~sunpy.timeseries.metadata.TimeSeriesMetaData.get` method.  This method takes a
 single key string or list of key strings with the optional filters and will
@@ -488,6 +541,7 @@ method: ::
 
     >>> tsmd_return = my_timeseries.meta.get('telescop', colname='xrsa')
     >>> tsmd_return.values()
+    ['GOES 15']
 
 Note `~sunpy.timeseries.metadata.TimeSeriesMetaData.values` removes duplicate
 strings and sorts the returned list.  You can update the values for these
@@ -495,7 +549,7 @@ entries efficiently using the `~sunpy.timeseries.metadata.TimeSeriesMetaData.upd
 method which takes a dictionary argument and updates the values to each of the
 dictionaries that match the given colname and time filters, for example: ::
 
-    >>> my_timeseries.meta.upate({'telescop': 'G15'}, colname='xrsa', overwrite=True)
+    >>> my_timeseries.meta.update({'telescop': 'G15'}, colname='xrsa', overwrite=True)
 
 Here we have to specify the overwrite=False keyword parameter to allow us to
 overwrite values for keys already present in the `~sunpy.util.metadata.MetaDict`

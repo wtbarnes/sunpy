@@ -1,9 +1,11 @@
-# Dependencies required to build the documentation
+# Dependencies required to build the documentation.
 
 -r base.txt
 -r dev.txt
 -r extra.txt
 
+ruamel.yaml
 sphinx
-git+https://github.com/sunpy/sunpy-sphinx-theme.git@v0.1.0a1
-sphinx-gallery
+sunpy-sphinx-theme
+git+https://github.com/sphinx-gallery/sphinx-gallery
+sphinx-astropy

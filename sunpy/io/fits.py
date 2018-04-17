@@ -9,8 +9,7 @@ FITS
     sunpy header. To add a comment to the file on write, add a comment to this
     dictionary with the same name as a key in the header (upcased).
 
-PyFITS
-    [1] Due to the way PyFITS works with images the header dictionary may
+    [2] Due to the way `~astropy.io.fits` works with images the header dictionary may
     differ depending on whether is accessed before or after the fits[0].data
     is requested. If the header is read before the data then the original
     header will be returned. If the header is read after the data has been
@@ -18,7 +17,7 @@ PyFITS
     reflecting these changes will be returned: BITPIX may differ and
     BSCALE and B_ZERO may be dropped in the modified version.
 
-    [2] The verify('fix') call attempts to handle violations of the FITS
+    [3] The verify('fix') call attempts to handle violations of the FITS
     standard. For example, nan values will be converted to "nan" strings.
     Attempting to cast a pyfits header to a dictionary while it contains
     invalid header tags will result in an error so verifying it early on
@@ -26,9 +25,7 @@ PyFITS
 
 References
 ----------
-| http://stackoverflow.com/questions/456672/class-factory-in-python
-| http://stsdas.stsci.edu/download/wikidocs/The_PyFITS_Handbook.pdf
-
+| https://stackoverflow.com/questions/456672/class-factory-in-python
 """
 from __future__ import absolute_import, division, print_function
 import os
@@ -75,7 +72,7 @@ def read(filepath, hdus=None, memmap=None, **kwargs):
     Also all comments in the original file are concatenated into a single
     'comment' key in the returned FileHeader.
     """
-    with fits.open(filepath, memmap=memmap) as hdulist:
+    with fits.open(filepath, ignore_blank=True, memmap=memmap) as hdulist:
         if hdus is not None:
             if isinstance(hdus, int):
                 hdulist = hdulist[hdus]
@@ -121,7 +118,7 @@ def get_header(afile):
         hdulist = afile
         close = False
     else:
-        hdulist = fits.open(afile)
+        hdulist = fits.open(afile, ignore_blank=True)
         hdulist.verify('silentfix')
         close = True
 
@@ -231,6 +228,7 @@ def extract_waveunit(header):
     directly passed to ``astropy.units.Unit``::
 
         >>> import astropy.units
+        >>> header = {'WAVEUNIT': 'Angstrom', 'KEYCOMMENTS': {}}
         >>> waveunit = extract_waveunit(header)
         >>> if waveunit is not None:
         ...     unit = astropy.units.Unit(waveunit)

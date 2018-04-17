@@ -48,11 +48,11 @@ class LYRALightCurve(LightCurve):
     Examples
     --------
     >>> import sunpy
-    >>> lyra = sunpy.lightcurve.LYRALightCurve.create()
+    >>> lyra = sunpy.lightcurve.LYRALightCurve.create()   # doctest: +REMOTE_DATA
     >>> lyra = sunpy.lightcurve.LYRALightCurve.create('~/Data/lyra/lyra_20110810-000000_lev2_std.fits')   # doctest: +SKIP
-    >>> lyra = sunpy.lightcurve.LYRALightCurve.create('2011/08/10')
-    >>> lyra = sunpy.lightcurve.LYRALightCurve.create('2011/08/10', level=3)
-    >>> lyra = sunpy.lightcurve.LYRALightCurve.create("http://proba2.oma.be/lyra/data/bsd/2011/08/10/lyra_20110810-000000_lev2_std.fits")
+    >>> lyra = sunpy.lightcurve.LYRALightCurve.create('2011/08/10')   # doctest: +REMOTE_DATA
+    >>> lyra = sunpy.lightcurve.LYRALightCurve.create('2011/08/10', level=3)   # doctest: +REMOTE_DATA
+    >>> lyra = sunpy.lightcurve.LYRALightCurve.create("http://proba2.oma.be/lyra/data/bsd/2011/08/10/lyra_20110810-000000_lev2_std.fits")   # doctest: +REMOTE_DATA
     >>> lyra.peek()   # doctest: +SKIP
 
     References
@@ -80,25 +80,9 @@ class LYRALightCurve(LightCurve):
         **kwargs : dict
             Any additional plot arguments that should be used
             when plotting.
-
-        Returns
-        -------
-        fig : `~matplotlib.Figure`
-            A plot figure.
         """
         lyranames = (('Lyman alpha','Herzberg cont.','Al filter','Zr filter'),
                  ('120-123nm','190-222nm','17-80nm + <5nm','6-20nm + <2nm'))
-
-        # Choose title if none was specified
-        #if not kwargs.has_key("title"):
-        #    if len(self.data.columns) > 1:
-        #        kwargs['title'] = 'LYRA data'
-        #    else:
-        #        if self._filename is not None:
-        #            base = self._filename
-        #            kwargs['title'] = os.path.splitext(base)[0]
-        #        else:
-        #            kwargs['title'] = 'LYRA data'
         figure = plt.figure()
         plt.subplots_adjust(left=0.17,top=0.94,right=0.94,bottom=0.15)
         axes = plt.gca()
@@ -116,10 +100,7 @@ class LYRALightCurve(LightCurve):
         axes[-1].set_xlabel("Time")
         for axe in axes:
             axe.locator_params(axis='y',nbins=6)
-
         figure.show()
-
-        return figure
 
     @staticmethod
     def _get_url_for_date(date, **kwargs):
