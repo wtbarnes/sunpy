@@ -29,6 +29,11 @@ sohoeit195 = ct.eit_color_table(195*u.angstrom)
 sohoeit284 = ct.eit_color_table(284*u.angstrom)
 sohoeit304 = ct.eit_color_table(304*u.angstrom)
 
+solohri_lya1216 = ct.aia_color_table(1600*u.angstrom)
+solohri_euv174 = ct.aia_color_table(171*u.angstrom)
+solofsi174 = ct.aia_color_table(171*u.angstrom)
+solofsi304 = ct.aia_color_table(304*u.angstrom)
+
 goesrsuvi94 = ct.suvi_color_table(94*u.angstrom)
 goesrsuvi131 = ct.suvi_color_table(131*u.angstrom)
 goesrsuvi171 = ct.suvi_color_table(171*u.angstrom)
@@ -102,6 +107,10 @@ cmlist = {
     'sohoeit304': sohoeit304,
     'soholasco2': soholasco2,
     'soholasco3': soholasco3,
+    'solohri_lya1216': solohri_lya1216,
+    'solohri_euv174': solohri_euv174,
+    'solofsi174': solofsi174,
+    'solofsi304': solofsi304,
     'sswidlsoholasco2': sswidlsoholasco2,
     'sswidlsoholasco3': sswidlsoholasco3,
     'stereocor1': stereocor1,
