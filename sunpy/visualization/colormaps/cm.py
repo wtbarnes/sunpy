@@ -29,10 +29,19 @@ sohoeit195 = ct.eit_color_table(195*u.angstrom)
 sohoeit284 = ct.eit_color_table(284*u.angstrom)
 sohoeit304 = ct.eit_color_table(304*u.angstrom)
 
-solohri_lya1216 = ct.aia_color_table(1600*u.angstrom)
+# Solar Orbiter EUI
+# These are deliberately the same as AIA
 solohri_euv174 = ct.aia_color_table(171*u.angstrom)
+solohri_euv174.name = 'SolO EUI HRI 174 angstrom'
 solofsi174 = ct.aia_color_table(171*u.angstrom)
+solofsi174.name = 'SolO EUI FSI 174 angstrom'
 solofsi304 = ct.aia_color_table(304*u.angstrom)
+solofsi304.name = 'SolO EUI FSI 304 angstrom'
+
+# Lyman alpha is a modified IDL red color table
+solohri_lya1216 = ct.idl_3
+solohri_lya1216[:, 2] = solohri_lya1216[:, 0] * np.linspace(0, 1, 256)
+solohri_lya1216 = ct._cmap_from_rgb(*solohri_lya1216.T, 'SolO EUI HRI Lyman Alpha')
 
 goesrsuvi94 = ct.suvi_color_table(94*u.angstrom)
 goesrsuvi131 = ct.suvi_color_table(131*u.angstrom)

@@ -303,8 +303,10 @@ def suvi_color_table(wavelength: u.angstrom):
 def rhessi_color_table():
     return cmap_from_rgb_file("rhessi", "rhessi.csv")
 
+
 def std_gamma_2():
     return cmap_from_rgb_file("std_gamma_2", "std_gamma_2.csv")
+
 
 def cmap_from_rgb_file(name, fname):
     """
