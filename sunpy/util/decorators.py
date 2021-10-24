@@ -397,7 +397,11 @@ def check_arithmetic_compatibility():
             # a different error because it is expected that this type of operation will be supported
             # in future releases.
             if isinstance(value, GenericMap):
-                raise NotImplementedError('Arithmetic operations between maps are not supported.')
+                if instance.wcs.wcs.compare(value.wcs.wcs, cmp=0, tolerance=1e-2):
+                    value = u.Quantity(value.data, value.unit, copy=False)
+                else:
+                    raise NotImplementedError(
+                        'Arithmetic operations between maps with different WCSs are not supported.')
             try:
                 # We want to support operations between numbers and array-like objects. This includes
                 # floats, ints, lists (of the aforementioned), arrays, quantities. This test acts as
