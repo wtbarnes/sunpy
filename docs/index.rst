@@ -22,6 +22,7 @@ data analysis environment for Python.
             generated/gallery/index
             code_ref/index
             whatsnew/index
+            howto
 
     .. grid-item-card::
         :class-card: card
