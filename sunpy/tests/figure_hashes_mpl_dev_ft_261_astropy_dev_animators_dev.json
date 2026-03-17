@@ -84,7 +84,7 @@
   "sunpy.timeseries.tests.test_timeseriesbase.test_column_subset_peek": "0f59e0373961dd47104d0919b22720d2f755716b9b57fd302c728d147a9f9fb6",
   "sunpy.timeseries.tests.test_timeseriesbase.test_generic_ts_peek": "1cb20c67030167b5d9f5047dd3ab488fd7670692f27f51e90ff27e0abaab0a3e",
   "sunpy.visualization.animator.tests.test_mapsequenceanimator.test_map_sequence_animator_wcs_simple_plot": "f92be06a340c32a757d4f73ca80105ca30e05e65d3c9d95aa03c40baf6589890",
-  "sunpy.visualization.colormaps.tests.test_cm.test_cmap_visual": "7bc14c267c21cb78d379b2991bcca219dcbb8ab97ea8a2eccac2b4dcfacda1fc",
+  "sunpy.visualization.colormaps.tests.test_cm.test_cmap_visual": "b11da94caeeb93d0e38f3812080cced52d0f84ef778da75d49ba7c45a391a9aa",
   "sunpy.visualization.tests.test_drawing.test_draw_equator_aia171": "080d2b0047c4d16092be263eb4e3736d3d67428c19d9e5fe8908ff837f8c6afe",
   "sunpy.visualization.tests.test_drawing.test_draw_extent": "5da012355e3740b339be789d0079c103ddad19c822975730448f766fddf8b025",
   "sunpy.visualization.tests.test_drawing.test_draw_extent_3d": "57dc22fbd6909c080fb476a7ccd4916b4c4b56ac02bc7ed2e5e8db1b18e60024",
