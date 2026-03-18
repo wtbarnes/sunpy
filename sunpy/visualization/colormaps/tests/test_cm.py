@@ -3,6 +3,7 @@ import pytest
 from numpy import linspace
 
 import astropy.units as u
+
 import sunpy.visualization.colormaps as cm
 import sunpy.visualization.colormaps.color_tables as ct
 from sunpy.tests.helpers import figure_test
