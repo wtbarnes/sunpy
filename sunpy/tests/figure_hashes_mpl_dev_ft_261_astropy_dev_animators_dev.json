@@ -83,12 +83,12 @@
   "sunpy.timeseries.sources.tests.test_rhessi.test_rhessi_peek": "05ea139e1238ab6d46ec2c3b375c46f342d94ebdc035a32a761d066ce803fd88",
   "sunpy.timeseries.tests.test_timeseriesbase.test_column_subset_peek": "0f59e0373961dd47104d0919b22720d2f755716b9b57fd302c728d147a9f9fb6",
   "sunpy.timeseries.tests.test_timeseriesbase.test_generic_ts_peek": "1cb20c67030167b5d9f5047dd3ab488fd7670692f27f51e90ff27e0abaab0a3e",
-  "sunpy.visualization.animator.tests.test_mapsequenceanimator.test_map_sequence_animator_wcs_simple_plot": "f92be06a340c32a757d4f73ca80105ca30e05e65d3c9d95aa03c40baf6589890",
+  "sunpy.visualization.animator.tests.test_mapsequenceanimator.test_map_sequence_animator_wcs_simple_plot": "481089aa8698c63ae91cb1db73f2cea313119a8f7965aa77f56d5e461ce5b0b6",
   "sunpy.visualization.colormaps.tests.test_cm.test_cmap_visual": "b11da94caeeb93d0e38f3812080cced52d0f84ef778da75d49ba7c45a391a9aa",
-  "sunpy.visualization.tests.test_drawing.test_draw_equator_aia171": "080d2b0047c4d16092be263eb4e3736d3d67428c19d9e5fe8908ff837f8c6afe",
-  "sunpy.visualization.tests.test_drawing.test_draw_extent": "5da012355e3740b339be789d0079c103ddad19c822975730448f766fddf8b025",
-  "sunpy.visualization.tests.test_drawing.test_draw_extent_3d": "57dc22fbd6909c080fb476a7ccd4916b4c4b56ac02bc7ed2e5e8db1b18e60024",
-  "sunpy.visualization.tests.test_drawing.test_draw_prime_meridian_aia171": "8c3600762afc1dbf5cf05e79651bd715767ebaeb615c1b788390df6f9bb27bde",
-  "sunpy.visualization.tests.test_drawing.test_heliographic_equator_prime_meridian": "3cb195a44e899ef46de7365bd0a0c580b7ea69662bdc560a1bbb1686c2ad48cf",
+  "sunpy.visualization.tests.test_drawing.test_draw_equator_aia171": "8ac6d2fbe41d5541ede3b1b7e1b385b768be32daeff10a9df2999f53f0b8e3d9",
+  "sunpy.visualization.tests.test_drawing.test_draw_extent": "8cca37afc9adcb5d285192737341a14eec8c5b53cfab856df6232f0e8094996d",
+  "sunpy.visualization.tests.test_drawing.test_draw_extent_3d": "2a2ec97b8f8c5bb1b92fca4fa9aaa4ef41366bb6f477db03d64166e9cc45b8e2",
+  "sunpy.visualization.tests.test_drawing.test_draw_prime_meridian_aia171": "e6738daedf1b15f58406108eabb91faa83e50d2b55dc36ccc05662add69508e0",
+  "sunpy.visualization.tests.test_drawing.test_heliographic_equator_prime_meridian": "d875628d30eb4af49627f6db82aa7876d23e11c76a52108d78cbc401243aadc0",
   "sunpy.visualization.tests.test_visualization.test_show_hpr_impact_angle": "b6cdb96de7411476a395f41c30877ff48db6f17a2f72a3d05b5d8406144072f3"
 }
