@@ -15,9 +15,6 @@ on:
   pull_request:
   # Allow manual runs through the web UI
   workflow_dispatch:
-  # Trigger on completion of the scheduled_builds.yml file (only on main)
-  workflow_run:  # zizmor: ignore[dangerous-triggers]  # TODO: Fix our cron job hell
-    workflows: [Scheduled build triggerer]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -144,7 +141,7 @@ jobs:
       submodules: false
       save_artifacts: true
       upload_to_pypi: false
-      upload_to_anaconda: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+      upload_to_anaconda: ${{ github.event_name == 'workflow_dispatch' }}
       anaconda_user: scientific-python-nightly-wheels
       anaconda_package: sunpy
       anaconda_keep_n_latest: 1
@@ -168,7 +165,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     name: Upload to PyPI
     runs-on: ubuntu-latest
-    needs: [build_dists]
+    needs: [build_dists, publish_pure]
     permissions:
       id-token: write
     environment:
@@ -187,7 +184,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1  # zizmor: ignore[unpinned-uses]
 
   notify:
-    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run')
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
     needs: [publish_pure, online]
     environment:
       name: matrix
@@ -199,5 +196,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           homeserver: ${{ secrets.matrix_homeserver }}
           roomid: '!JYqfIVJjWANcHnfktY:cadair.com'
-          ignore_pattern: '.*Load.*'
+          ignore_pattern: '.*(Load|report overall).*'
           summarise_success: true

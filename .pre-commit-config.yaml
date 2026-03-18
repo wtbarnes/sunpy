@@ -40,7 +40,6 @@ repos:
         exclude: *exclude_dirs
       - id: check-added-large-files
         args: ["--enforce-all", "--maxkb=1054"]
-        exclude: ""
       - id: end-of-file-fixer
         types_or: [python, rst]
       - id: mixed-line-ending
@@ -51,11 +50,6 @@ repos:
       - id: typos
         types_or: [python, rst]
         exclude: *exclude_dirs
-  - repo: meta
-    hooks:
-      - id: check-hooks-apply
-      # This may fail if you do not have matching files in the data/ or extern/ directories
-      - id: check-useless-excludes
   - repo: local
     hooks:
       - id: generate-sunpy-net-hek-attrs
