@@ -149,7 +149,7 @@ jobs:
       anaconda_token: ${{ secrets.anaconda_org_upload_token }}
 
   publish_pure:
-    needs: [publish]
+    needs: [test, docs]
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish_pure_python.yml@v2  # zizmor: ignore[unpinned-uses]
     with:
       python-version: "3.13"
