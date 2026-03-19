@@ -141,6 +141,6 @@ jobs:
           matrix_token: '${{ secrets.MATRIX_ACCESS_TOKEN }}'
           github_token: '${{ secrets.GITHUB_TOKEN }}'
           homeserver: '${{ secrets.MATRIX_HOMESERVER }}'
-          roomid: '{{ cookiecutter.matrix_room_id }}'
+          roomid: '!JYqfIVJjWANcHnfktY:cadair.com'
           ignore_pattern: '.*(Load|report overall).*'
           summarise_success: true
