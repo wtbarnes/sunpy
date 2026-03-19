@@ -9,6 +9,8 @@ on:
 #            │ │ │ │ ┌───────── day of the week (0 - 6 or SUN-SAT)
     - cron: '0 5 * * *' # Every day at 05:00 UTC
 
+permissions: {}
+
 jobs:
   stale:
     permissions:
