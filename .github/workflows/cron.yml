@@ -137,9 +137,10 @@ jobs:
     steps:
       - uses: Cadair/matrix-notify-action@31c7cc36051ee7dc4157a22c1f13dbc7d68e5120 # v2
         with:
-          matrix_token: ${{ secrets.matrix_access_token }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          homeserver: ${{ secrets.matrix_homeserver }}
+          workflow_description: "Cron Workflow"
+          matrix_token: '${{ secrets.MATRIX_ACCESS_TOKEN }}'
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          homeserver: '${{ secrets.MATRIX_HOMESERVER }}'
           roomid: '!JYqfIVJjWANcHnfktY:cadair.com'
-          ignore_pattern: '.*Load.*'
+          ignore_pattern: '.*(Load|report overall).*'
           summarise_success: true
