@@ -141,7 +141,7 @@ jobs:
       submodules: false
       save_artifacts: true
       upload_to_pypi: false
-      upload_to_anaconda: ${{ github.event_name == 'workflow_dispatch' }}
+      upload_to_anaconda: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
       anaconda_user: scientific-python-nightly-wheels
       anaconda_package: sunpy
       anaconda_keep_n_latest: 1
