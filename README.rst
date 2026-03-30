@@ -1,5 +1,7 @@
+``sunpy``
+=========
+
 SunPy core package: Python for Solar Physics
-============================================
 
 |SunPy Logo|
 
