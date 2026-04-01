@@ -67,7 +67,7 @@
   "sunpy.map.tests.test_reproject_to.test_reproject_to_auto_extent[edges]": "4bfa3a80a162336694ca765615e2bc9d75dac88eed2f875309b4557e42e1e3c3",
   "sunpy.map.tests.test_reproject_to.test_reproject_to_hgs": "0aef860ddbd9b1c0bc8326f99ff19d89491157f1ea764863d8af61887cf48936",
   "sunpy.map.tests.test_reproject_to.test_reproject_to_hpc_adaptive": "66d59dc564bee74da316c86361a46caf7fbce42d0fe4d2fcfcf8a9b873fe9648",
-  "sunpy.map.tests.test_reproject_to.test_reproject_to_hpc_exact": "bd8e111a525c87f7a025b352f10a8e87b944a746b3418db0ec6b2e077f313b4d",
+  "sunpy.map.tests.test_reproject_to.test_reproject_to_hpc_exact": "c5ddf832db73a54435f3d70adfeb963a722a4a6c00ed7b746830ed5a2a289d90",
   "sunpy.map.tests.test_reproject_to.test_reproject_to_hpc_interpolation": "5c32de309fdd632356360d77a3a861c31add6289170c89216408baff94c49c96",
   "sunpy.map.tests.test_reproject_to.test_reproject_to_screen_plus_diffrot[PlanarScreen]": "3594e013e431570615f6902ad25262cb76051eed26590dd723263e98f3fd0783",
   "sunpy.map.tests.test_reproject_to.test_reproject_to_screen_plus_diffrot[SphericalScreen]": "da5f133c7c35efe4a8b682e195c8e586737621a9e701ecfe8a5b6a2991bd198e",
