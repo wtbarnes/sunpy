@@ -9,19 +9,11 @@ on:
     types:
       - synchronize
       - labeled
-  # We want this workflow to always run on release branches as well as
-  # all tags since we want to be really sure we don't introduce
-  # regressions on the release branches, and it's also important to run
-  # this on pre-release and release tags.
+  # We want this workflow to always run on release branches.
   push:
     branches:
       - '*.*'
       - '!*backport*'
-    tags:
-      - 'v*'
-      - '!*dev*'
-      - '!*pre*'
-      - '!*post*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
