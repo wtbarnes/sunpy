@@ -13,8 +13,10 @@ import lensfunpy
 import matplotlib
 import numpy as np
 import requests
+from astroquery.vizier import Vizier
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
+from photutils.detection import DAOStarFinder
 from scipy.ndimage import map_coordinates
 from skimage.color import rgb2gray
 from skimage.feature import canny
@@ -22,10 +24,11 @@ from skimage.transform import hough_circle, hough_circle_peaks
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation, SkyCoord, solar_system_ephemeris
+from astropy.stats import mad_std
 from astropy.time import Time
 from astropy.wcs.utils import fit_wcs_from_points
 
-from sunpy.coordinates import Helioprojective, get_horizons_coord
+from sunpy.coordinates import Helioprojective, SphericalScreen, get_horizons_coord
 from sunpy.map import Map, make_fitswcs_header
 
 solar_system_ephemeris.set('de440s')
@@ -300,3 +303,51 @@ wcs_fitted = fit_wcs_from_points(pixel_coords.T,
 m = Map(artemis_image, wcs_fitted)
 
 fig, ax = plot_artemis_map(m, moon_hpc, planets)
+
+##############################################################################
+# Try to use stars to fit WCS
+
+data = artemis_map_roll.data  # SunPy map data
+
+bkg_sigma = mad_std(data)
+
+daofind = DAOStarFinder(fwhm = 5.0, threshold = 5. * bkg_sigma, brightest=100)
+sources = daofind(data)
+
+x_meas = sources['xcentroid']
+y_meas = sources['ycentroid']
+
+star_coords = artemis_map_roll.pixel_to_world(x_meas*u.pix, y_meas*u.pix)
+
+fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
+ax.plot_coord(star_coords, 's', markerfacecolor='none')
+ax.scatter(x_meas, y_meas, marker='+', color='r')
+
+##############################################################################
+# Try to use stars to fit WCS
+# Filter for bright stars (e.g., V magnitude < 8)
+
+
+v = Vizier(columns=['*'], column_filters={'Vmag': '<8'})
+v.ROW_LIMIT = 50  # Get enough points for a high-order SIP fit
+
+with SphericalScreen(coords["artemis_ii"]):
+    center_icrs = artemis_map_roll.center.icrs
+results = v.query_region(center_icrs,
+                        radius=30*u.deg, catalog='I/239/hip_main')
+catalog = results[0]
+
+catalog_coords = SkyCoord(
+    ra=catalog["RAICRS"],
+    dec=catalog["DEICRS"],
+    distance=1 * u.kpc,
+    frame="icrs",
+    obstime=obstime,
+)
+
+fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
+ax.plot_coord(star_coords, 's', markerfacecolor='none')
+ax.plot_coord(catalog_coords, '+')
+
+# Match entirely in ICRS — no observer needed
+#idx, sep, _ = detected_icrs.match_to_catalog_sky(catalog_coords)
