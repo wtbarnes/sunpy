@@ -9,11 +9,13 @@ Analyse Artemis-II solar eclipse images
 from pathlib import Path
 
 import exifread
+import lensfunpy
 import matplotlib
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
+from scipy.ndimage import map_coordinates
 from skimage.color import rgb2gray
 from skimage.feature import canny
 from skimage.transform import hough_circle, hough_circle_peaks
@@ -27,14 +29,6 @@ from sunpy.coordinates import Helioprojective, get_horizons_coord
 from sunpy.map import Map, make_fitswcs_header
 
 solar_system_ephemeris.set('de440s')
-
-#NAIF IDS
-NAIF_IDS = {
-    "artemis_2": -1024,
-    "moon": 301,
-    "earth": 399,
-    "sun": 10
-}
 
 ##############################################################################
 # Download and read in the raw image data
@@ -67,7 +61,50 @@ obstime = Time(f"{obsdate}T{obstime}")
 hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
 offset = hours*u.hour
 
-# obstime = obstime + offset # seems worse if I use this
+# obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
+
+##############################################################################
+# Correct lens distortion
+
+height, width = artemis_image_rbg.shape[:2]
+focal_length = tags["EXIF FocalLength"].values[0]
+aperture = tags["EXIF FNumber"].values[0]
+distance = 100.0  # metres — set to your actual focus distance if known
+
+db = lensfunpy.Database()
+camera = db.find_cameras('NIKON CORPORATION', 'NIKON Z 9')[0]
+lens = db.find_lenses(camera, lens='35mm f/2D')[0]
+
+print(f"Camera : {camera}")
+print(f"Lens   : {lens}")
+
+def remap(channel, coords):
+    """
+    channel : 2-D array (H, W)
+    coords  : lensfunpy coord array for this channel, shape (H, W, 2)
+              where [..., 0] = x (column) and [..., 1] = y (row)
+    """
+    row_coords = coords[:, :, 1]  # y → row index
+    col_coords = coords[:, :, 0]  # x → col index
+    return map_coordinates(
+        channel,
+        [row_coords, col_coords],
+        order=3,  # bicubic — change to 1 for bilinear, 5 for lanczos-like
+        mode='nearest',  # edge handling
+        prefilter=True,
+    ).clip(0, 255).astype(np.uint8)
+
+mod = lensfunpy.Modifier(lens, camera.crop_factor, width, height)
+mod.initialize(focal_length, aperture, distance)
+
+undist_coords = mod.apply_geometry_distortion()  # (H, W, 2)
+
+artemis_image_undistorted = np.stack([
+    remap(artemis_image_rbg[:, :, ch], undist_coords)
+    for ch in range(3)
+], axis=-1)
+
+artemis_image = rgb2gray(artemis_image_undistorted)
 
 ##############################################################################
 # Extract ROI around the moon
@@ -84,24 +121,33 @@ roi = artemis_image[slice_y, slice_x]
 ##############################################################################
 # Get coordinates at observation times and tracks
 
+NAIF_IDS = {
+    "artemis_ii": -1024,
+    "moon": 301,
+    "earth": 399,
+    "sun": 10
+}
+
 times = np.linspace(obstime - (24*u.hour), obstime + (24*u.hour), 100)
 
 coords =  {key: get_horizons_coord(str(value), obstime) for key, value in NAIF_IDS.items()}
 tracks =  {key: get_horizons_coord(str(value), times) for key, value in NAIF_IDS.items()}
 
-sun_artemis = np.vstack([coords[n].cartesian.xyz for n in ['sun', 'artemis_2']])
+sun_artemis = np.vstack([coords[n].cartesian.xyz for n in ['sun', 'artemis_ii']])
 
 fig, ax = plt.subplots(1, 2)
-ax[0].plot(sun_artemis[:,0], sun_artemis[:,2], 'k-', label="Sun-Artemis-II", linewidth=0.5)
-ax[1].plot(sun_artemis[:,0], sun_artemis[:,2], 'k-', label="Sun- Artemis-II", linewidth=0.5)
+ax[0].plot(sun_artemis[:,0], sun_artemis[:,2], 'k-', label="Sun Artemis-II line", linewidth=0.5)
+ax[1].plot(sun_artemis[:,0], sun_artemis[:,2], 'k-', label="Sun Artemis-II line", linewidth=0.5)
 for name, coord in coords.items():
     for i in [0, 1]:
-        line = ax[i].plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o', label=name)
+        line = ax[i].plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o',
+                          label=name.title().replace('i', 'I'))
         ax[i].plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2], color=line[0].get_color())
 
 ax[0].legend()
 ax[1].set_xlim(0.9930, 0.9992)
 ax[1].set_ylim(-0.10856, -0.10806)
+
 ##############################################################################
 # Edge detection and Hough filtering
 
@@ -111,6 +157,9 @@ hough_radii = np.arange(np.floor(np.mean(edges.shape) / 4), np.ceil(np.mean(edge
 hough_res = hough_circle(edges, hough_radii)
 
 accums, cx, cy, radii = hough_circle_peaks(hough_res, hough_radii, total_num_peaks=1)
+
+##############################################################################
+# Plot edge detection results
 
 fig, ax = plt.subplots(ncols=3, nrows=1, figsize=(9.5, 6))
 ax[0].imshow(artemis_image[slice_y, slice_x])
@@ -123,8 +172,8 @@ circ = Circle(
 ax[2].imshow(artemis_image[slice_y, slice_x])
 ax[2].add_patch(circ)
 ax[2].set_title("Original with fit")
-plt.legend()
-plt.show()
+fig.legend()
+
 
 ##############################################################################
 # Build up meta data required to make a map
@@ -133,9 +182,9 @@ im_cx = (cx[0] + slice_x.start) * u.pix
 im_cy = (cy[0] + slice_y.start) * u.pix
 im_radius = radii[0] * u.pix
 
-moon = SkyCoord(coords['moon'], observer=coords['artemis_2'])
+moon = SkyCoord(coords['moon'], observer=coords['artemis_ii'])
 R_moon = 0.2725076 *  u.R_earth  # IAU mean radius
-dist_moon = SkyCoord(coords['artemis_2']).separation_3d(moon)
+dist_moon = SkyCoord(coords['artemis_ii']).separation_3d(moon)
 moon_obs = np.arcsin(R_moon / dist_moon).to("arcsec")
 print(moon_obs)
 
@@ -146,7 +195,7 @@ print(plate_scale)
 ##############################################################################
 # Make map
 
-frame = Helioprojective(observer=coords['artemis_2'], obstime=obstime)
+frame = Helioprojective(observer=coords['artemis_ii'], obstime=obstime)
 moon_hpc = coords['moon'].transform_to(frame)
 
 header = make_fitswcs_header(
@@ -159,18 +208,31 @@ header = make_fitswcs_header(
 artemis_map = Map(artemis_image, header)
 
 ##############################################################################
+# Reusable plot helper
+
+def plot_artemis_map(amap, moon_coord, planets):
+    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=(10, 5), dpi=150)
+    amap.plot(axes=ax)
+    amap.draw_grid(axes=ax)
+    amap.draw_limb(axes=ax)
+    ax.coords[0].set_format_unit(u.deg)
+    ax.coords[1].set_format_unit(u.deg)
+
+    ax.plot_coord(moon_coord, 'b+', label="Lunar Center")
+    theta = np.linspace(0, 360, 100) * u.deg
+    lunar_limb = np.vstack([moon_hpc.Tx + np.sin(theta) * moon_obs, moon_hpc.Ty + np.cos(theta) * moon_obs])
+    ax.plot_coord(SkyCoord(*lunar_limb, frame=artemis_map.coordinate_frame), label="Lunar Limb")
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    for name, coord in planets.items():
+        ax.plot_coord(coord, 'o', markerfacecolor='none', label=name.title())
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.legend()
+    return fig, ax
+##############################################################################
 # Plot map and positions of Saturn, Mar and Mercury if the WCS is good
-
-fig, ax = plt.subplots(1,1, subplot_kw={"projection":artemis_map}, figsize=(10, 5), dpi=150)
-artemis_map.plot(axes=ax)
-artemis_map.draw_grid(axes=ax)
-artemis_map.draw_limb(axes=ax)
-
-ax.plot_coord(moon_hpc, 'b+', label="Lunar Center")
-theta= np.linspace(0, 360, 100)*u.deg
-lunar_limb = np.vstack([moon_hpc.Tx + np.sin(theta)*moon_obs, moon_hpc.Ty +np.cos(theta)*moon_obs])
-ax.plot_coord(SkyCoord(*lunar_limb, frame=artemis_map.coordinate_frame), label="Lunar Limb")
-
 
 PLANET_NAIFS = {
     "mercury": 199,
@@ -184,13 +246,7 @@ PLANET_NAIFS = {
 }
 planets = {name: get_horizons_coord(str(id), obstime) for name, id in PLANET_NAIFS.items()}
 
-xlim = ax.get_xlim()
-ylim = ax.get_ylim()
-for name, coord in planets.items():
-    ax.plot_coord(coord, 'o', markerfacecolor='none', label=name.title())
-ax.set_xlim(xlim)
-ax.set_ylim(ylim)
-ax.legend()
+fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets)
 
 ##############################################################################
 # Can see a pretty clear roll so use position of Saturn to obtain an estimate of the roll
@@ -223,23 +279,7 @@ artemis_map_roll = Map(artemis_image, header_roll)
 # Plot map and positions of Saturn, Mar and Mercury if the WCS is good.
 # Seems to be some residual distortion
 
-fig, ax = plt.subplots(1,1, subplot_kw={"projection":artemis_map_roll}, figsize=(10, 5), dpi=150)
-artemis_map_roll.plot(axes=ax)
-# artemis_map_roll.draw_grid(axes=ax)
-artemis_map_roll.draw_limb(axes=ax)
-
-ax.plot_coord(moon_hpc, 'b+', label="Lunar Center")
-theta= np.linspace(0, 360, 100)*u.deg
-lunar_limb = np.vstack([moon_hpc.Tx + np.sin(theta)*moon_obs, moon_hpc.Ty +np.cos(theta)*moon_obs])
-ax.plot_coord(SkyCoord(*lunar_limb, frame=artemis_map.coordinate_frame), color='b', linewidth=0.5, label="Lunar Limb")
-
-xlim = ax.get_xlim()
-ylim = ax.get_ylim()
-for name, coord in planets.items():
-    ax.plot_coord(coord, 'o', markerfacecolor='none', label=name.title())
-ax.set_xlim(xlim)
-ax.set_ylim(ylim)
-ax.legend()
+fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 
 ##############################################################################
 # Try to use the positions of the planets to fit the wcs more accurately
@@ -254,25 +294,9 @@ sky_coords = SkyCoord([#coords["moon"],
 
 wcs_fitted = fit_wcs_from_points(pixel_coords.T,
                                  sky_coords.transform_to(Helioprojective(obstime=obstime,
-                                                                         observer=coords["artemis_2"])),
+                                                                         observer=coords["artemis_ii"])),
                                  projection=artemis_map_roll.wcs)
 
 m = Map(artemis_image, wcs_fitted)
 
-fig, ax = plt.subplots(1,1, subplot_kw={"projection":m}, figsize=(10, 5), dpi=150)
-m.plot(axes=ax)
-# artemis_map_roll.draw_grid(axes=ax)
-m.draw_limb(axes=ax)
-
-ax.plot_coord(moon_hpc, 'b+', label="Lunar Center")
-theta= np.linspace(0, 360, 100)*u.deg
-lunar_limb = np.vstack([moon_hpc.Tx + np.sin(theta)*moon_obs, moon_hpc.Ty +np.cos(theta)*moon_obs])
-ax.plot_coord(SkyCoord(*lunar_limb, frame=m.coordinate_frame), color='b', linewidth=0.5, label="Lunar Limb")
-
-xlim = ax.get_xlim()
-ylim = ax.get_ylim()
-for name, coord in planets.items():
-    ax.plot_coord(coord, 'o', markerfacecolor='none', label=name.title())
-ax.set_xlim(xlim)
-ax.set_ylim(ylim)
-ax.legend()
+fig, ax = plot_artemis_map(m, moon_hpc, planets)
