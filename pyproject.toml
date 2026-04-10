@@ -148,6 +148,7 @@ docs-gallery = [
   "jplephem>=2.19",
   "pillow",
   "exifread",
+  "photutils"
 ]
 dev = ["sunpy[docs,tests]"]
 
