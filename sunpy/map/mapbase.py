@@ -674,6 +674,10 @@ class GenericMap(NDData):
         # Set the shape of the data array
         w2.array_shape = self.data.shape
 
+        if any(t.endswith("-SIP") for t in self.coordinate_system):
+            sip_wcs = astropy.wcs.WCS(header=self.meta)
+            w2.sip = sip_wcs.sip
+
         # Validate the WCS here.
         w2.wcs.set()
         return w2
