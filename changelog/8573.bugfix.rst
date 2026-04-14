@@ -1,1 +1,1 @@
-Add support for SIP distortion in Map WCS.
+Fixed a bug where SIP distortion information in a Map WCS was ignored.
