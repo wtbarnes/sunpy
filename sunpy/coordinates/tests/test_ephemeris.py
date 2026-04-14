@@ -178,3 +178,16 @@ def test_consistency_with_horizons(use_DE440s, obstime):
     e1 = get_body_heliographic_stonyhurst('mars', obstime)
     e2 = get_horizons_coord('Mars barycenter', obstime)
     assert_quantity_allclose(e2.separation_3d(e1), 0*u.km, atol=500*u.m)
+
+
+@pytest.mark.remote_data
+def test_get_horizons_coord_print_output(capsys):
+    get_horizons_coord('Mars Pathfinder', '1997-Jul-04', print_output=True)
+    captured = capsys.readouterr()
+    spot_check = [
+        "Revised: Feb 13, 2021     Mars Pathfinder Spacecraft / (Sun)              -530",
+        "1996  Dec 04 06:58 Launch aboard a Delta II booster from KSC (Cape Canaveral)",
+        "mpf_crus                               1997-Feb-04 02:30  1997-Jul-04 16:52",
+    ]
+    for line in spot_check:
+        assert line in captured.out

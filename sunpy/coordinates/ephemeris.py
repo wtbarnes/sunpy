@@ -192,7 +192,8 @@ def get_earth(time='now', *, include_velocity=False):
 
 
 @add_common_docstring(**_variables_for_parse_time_docstring())
-def get_horizons_coord(body, time='now', id_type=None, *, include_velocity=False):
+def get_horizons_coord(body, time='now', id_type=None, *,
+                       include_velocity=False, print_output=False):
     """
     Queries JPL HORIZONS and returns a `~astropy.coordinates.SkyCoord` for the location of a
     solar-system body at a specified time. This location is the instantaneous or "true" location,
@@ -224,6 +225,10 @@ def get_horizons_coord(body, time='now', id_type=None, *, include_velocity=False
 
     include_velocity : `bool`, optional
         If True, include the body's velocity in the output coordinate. Defaults to False.
+    print_output : `bool`, optional
+        If True, print out the received response.  This is useful for reading the
+        associated details (e.g., the source of the trajectory information).
+        Defaults to False.
 
     Returns
     -------
@@ -366,6 +371,9 @@ def get_horizons_coord(body, time='now', id_type=None, *, include_velocity=False
             raise ValueError(error_message)
         else:
             raise RuntimeError(f"Unknown JPL HORIZONS error:\n{output.text}")
+
+    if print_output:
+        print(output.text)
 
     column_names = [name.strip() for name in lines[start_index - 3].split(',')]
     result = ascii.read(lines[start_index:stop_index], names=column_names)
