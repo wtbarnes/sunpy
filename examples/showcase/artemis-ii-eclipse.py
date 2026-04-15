@@ -202,7 +202,7 @@ roi = artemis_image[slice_y, slice_x]
 edges = canny(roi, sigma=2)
 
 hough_radii = np.linspace(edges.shape[0] / 2.5, edges.shape[0] / 2, 30)
-hough_res = hough_circle(edges, hough_radii)
+hough_res = hough_circle(edges, hough_radii).astype(np.float32) #  reduce peak memory usage
 
 accums, cx, cy, radii = hough_circle_peaks(hough_res, hough_radii, total_num_peaks=1)
 
@@ -217,8 +217,8 @@ ax[0].set_title("Original")
 ax[1].imshow(edges)
 ax[1].set_title("Canny")
 circ = Circle(
-    [cx, cy], radius=radii, facecolor="none", edgecolor="red", linewidth=2, linestyle="dashed", label="Hough fit"
-)
+    np.hstack([cx, cy]), radius=radii, facecolor="none", edgecolor="red",
+    linewidth=2, linestyle="dashed", label="Hough fit")
 ax[2].imshow(artemis_image[slice_y, slice_x])
 ax[2].add_patch(circ)
 ax[2].set_title("Original with fit")
