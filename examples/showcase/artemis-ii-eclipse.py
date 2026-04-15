@@ -6,10 +6,11 @@ Artemis-II Solar Eclipse
 This example demonstrates how to process a solar eclipse image taken by Artemis-II crew using digital camera aboard the spacecraft during their lunar flyby on April 7, 2026.
 Due to the relative position of the Artemis-II spacecraft and the moon this eclipse lasted nearly 54 minutes of totality far exceeding what is possible on Earth
 Starting from raw JPEG images with EXIF metadata the observation time is extracted.
-Then the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial helioprojective WCS using `sunpy.map.make_fitswcs_header`.
-The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically using `photutils.detection.DAOStarFinder`.
+Then the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial Helioprojective WCS using `sunpy.map.header_helper.make_fitswcs_header`.
+The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically using a medial filter and `skimage.feature.peak_local_max`.
 Finally, the residual radial barrel distortion is modeling using a single SIP coefficient k1 derived from the planet positions.
 The resulting calibrated sunpy.map.Map allows solar corona features to be located.
+
 
 """
 
@@ -20,6 +21,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle, Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 from scipy.signal import medfilt2d
+from skimage import transform
 from skimage.color import rgb2gray
 from skimage.feature import canny, peak_local_max
 from skimage.transform import hough_circle, hough_circle_peaks
@@ -30,7 +32,8 @@ from astropy.time import Time
 from astropy.wcs import WCS
 
 from sunpy.coordinates import Helioprojective, SphericalScreen, get_horizons_coord
-from sunpy.map import Map, make_fitswcs_header
+from sunpy.map import Map
+from sunpy.map.header_helper import make_fitswcs_header
 
 # Accurate planetary ephemeris
 solar_system_ephemeris.set('de440s')
@@ -41,6 +44,9 @@ solar_system_ephemeris.set('de440s')
 #
 # Download and read in the raw image data taken by crew on Artemis-II
 
+# url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~medium.jpg"
+# To keep our online builds reasonable we use a reduced size image uncomment
+# the following line to use the full resolution image
 url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~orig.jpg"
 filename = url.split("/")[-1]
 with requests.get(url, stream=True) as res:
@@ -76,13 +82,6 @@ obstime = Time("2026-04-07T01:06:19.000")
 # # obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
 
 ##############################################################################
-# Extract ROI around the moon
-
-slice_y = slice(1466,3979)
-slice_x = slice(2100,4667)
-roi = artemis_image[slice_y, slice_x]
-
-##############################################################################
 # Get Coordinates
 # ===============
 #
@@ -107,7 +106,7 @@ coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.i
 tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["artemis_ii", "moon", "earth"]}
 
 ##############################################################################
-# Plot general orbit location with zoom the location of Artemtis-II to inspect
+# Plot general orbit location with zoom the location of Artemis-II to inspect
 # and make sure alignment makes sense for the eclipse image.
 
 sun_artemis = np.vstack([coords[n].cartesian.xyz for n in ['sun', 'artemis_ii']])
@@ -166,6 +165,38 @@ plt.tight_layout()
 # ===================================
 #
 # Edge detection and Hough filtering to obtain the moons limb and center.
+#
+# First pass on a downscaled version to get an estimate and use this estimate
+# to extract and ROI for full resolution pass
+
+scale = 0.1
+down_scaled = transform.rescale(artemis_image, scale, anti_aliasing=True)
+
+ # Edge detection
+edges = canny(down_scaled, sigma=2)
+
+ # Radius range in scaled image (from inspection of time radius >0.3 < 0.5 of image height
+h, w = down_scaled.shape
+radii = np.arange(0.2*h, 0.5*h, 10)
+
+ # Hough
+hough_res = hough_circle(edges, radii)
+accums, cx, cy, rad = hough_circle_peaks(hough_res, radii, total_num_peaks=1)
+
+ # Scale back to original resolution
+moon_x = int(cx[0] / scale)
+moon_y = int(cy[0] / scale)
+moon_r = rad[0] / scale
+roi_ext = int(1.1*moon_r)
+
+slice_y = slice(moon_y-roi_ext, moon_y+roi_ext)
+slice_x = slice(moon_x-roi_ext, moon_x+roi_ext)
+print(f"moon_x: {moon_x}, moon_y: {moon_y}, moon_r: {moon_r}")
+
+##############################################################################
+# Full resolution pass within ROI
+
+roi = artemis_image[slice_y, slice_x]
 
 edges = canny(roi, sigma=2)
 
@@ -215,7 +246,7 @@ print(plate_scale)
 # Make a Map
 # ==========
 #
-# Make map using the meta data obtained so far and `make_fitswcs_header`
+# Make map using the meta data obtained so far and `sunpy.map.header_helper.make_fitswcs_header`
 
 frame = Helioprojective(observer=coords['artemis_ii'], obstime=obstime)
 moon_hpc = coords['moon'].transform_to(frame)
@@ -280,10 +311,9 @@ fig.tight_layout()
 #
 # Can see a pretty clear roll so use positions of the planets to estimate the
 # camera orientation or roll. Median filter the image to remove most stars and
-# cosmic rays and then use `peak_local_max` to find the remaining peaks which
-# should be the planets
+# cosmic rays and then use `skimage.feature.peak_local_max` to find the
+# remaining peaks which should be the planets.
 
-#artemis_median_img = rank.median(artemis_image.astype(np.uint8), disk(5))
 artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
 planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
 
