@@ -13,7 +13,9 @@ The resulting calibrated sunpy.map.Map allows solar corona features to be locate
 
 
 """
+from pathlib import Path
 
+import exifread
 import matplotlib
 import numpy as np
 import requests
@@ -67,19 +69,17 @@ ax.set_axis_off()
 #
 # Requires extra package (exifread)
 
-obstime = Time("2026-04-07T01:06:19.000")
+with Path(filename).open("rb") as f:
+    tags = exifread.process_file(f)
 
-# with Path(filename).open("rb") as f:
-#     tags = exifread.process_file(f)
-#
-# obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
-# obsdate = obsdate.replace(":", "-")
-# obstime = Time(f"{obsdate}T{obstime}")
-#
-# hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
-# offset = hours*u.hour
-#
-# # obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
+obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
+obsdate = obsdate.replace(":", "-")
+obstime = Time(f"{obsdate}T{obstime}")
+
+hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
+offset = hours*u.hour
+
+# obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
 
 ##############################################################################
 # Get Coordinates
@@ -201,7 +201,7 @@ roi = artemis_image[slice_y, slice_x]
 
 edges = canny(roi, sigma=2)
 
-hough_radii = np.arange(np.floor(np.mean(edges.shape) / 4), np.ceil(np.mean(edges.shape) / 2), 10)
+hough_radii = np.linspace(edges.shape[0] / 2.5, edges.shape[0] / 2, 30)
 hough_res = hough_circle(edges, hough_radii)
 
 accums, cx, cy, radii = hough_circle_peaks(hough_res, hough_radii, total_num_peaks=1)
