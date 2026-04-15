@@ -90,22 +90,22 @@ offset = hours*u.hour
 # Get coordinates at observation time and 48 hour interval
 
 NAIF_IDS = {
-    "artemis_ii": -1024,
-    "moon": 301,
-    "sun": 10,
-    "mercury": 199,
-    "earth": 399,
-    "mars": 499,
-    "jupiter": 599,
-    "saturn": 699,
-    "uranus": 799,
-    "neptune": 899
+    "artemis_ii": "-1024",
+    "moon": "301",
+    "sun": "10",
+    "mercury": "199",
+    "earth": "399",
+    "mars": "499",
+    "jupiter": "599",
+    "saturn": "699",
+    "uranus": "799",
+    "neptune": "899",
 }
 
 times = np.linspace(obstime - (24*u.hour), obstime + (24*u.hour), 100)
 
-coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.items()}
-# tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["artemis_ii", "moon", "earth"]}
+coords =  {name: get_horizons_coord(id, obstime) for name, id in NAIF_IDS.items()}
+# tracks =  {name: get_horizons_coord(NAIF_IDS[name], times) for name in ["artemis_ii", "moon", "earth"]}
 
 ##############################################################################
 # Plot general orbit location with zoom the location of Artemis-II to inspect
@@ -220,7 +220,7 @@ ax[0].set_title("Original")
 ax[1].imshow(edges)
 ax[1].set_title("Canny")
 circ = Circle(
-    np.hstack([cx, cy]), radius=radii, facecolor="none", edgecolor="red",
+    np.hstack([cx, cy]), radius=radii[0], facecolor="none", edgecolor="red",
     linewidth=2, linestyle="dashed", label="Hough fit")
 ax[2].imshow(artemis_image[slice_y, slice_x])
 ax[2].add_patch(circ)
@@ -483,4 +483,5 @@ fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets_sip)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
 
+plt.show()
 # sphinx_gallery_thumbnail_number = -1
