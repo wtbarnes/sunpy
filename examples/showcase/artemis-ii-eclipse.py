@@ -167,7 +167,7 @@ ax[0].set_title("Original")
 ax[1].imshow(edges)
 ax[1].set_title("Canny")
 circ = Circle(
-    np.hstack([cx, cy]), radius=radii, facecolor="none", edgecolor="red",
+    np.hstack([cx, cy]), radius=radii[0], facecolor="none", edgecolor="red",
     linewidth=2, linestyle="dashed", label="Hough fit")
 ax[2].imshow(artemis_image[slice_y, slice_x])
 ax[2].add_patch(circ)
@@ -263,7 +263,9 @@ fig.tight_layout()
 # ===============
 #
 # Can see a pretty clear roll so use positions of the planets to estimate the
-# camera orientation or roll.
+# camera orientation or roll. Median filter the image to remove most stars and
+# cosmic rays and then use `skimage.feature.peak_local_max` to find the
+# remaining peaks which should be the planets if full resolution.
 
 if downsampled:
     planets_pixels = peak_local_max(artemis_image, threshold_abs=0.9, num_peaks=3, min_distance=30)
