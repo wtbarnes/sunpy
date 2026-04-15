@@ -20,8 +20,7 @@ import matplotlib
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle, Rectangle
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from matplotlib.patches import Circle
 from scipy.signal import medfilt2d
 from skimage import transform
 from skimage.color import rgb2gray
@@ -46,9 +45,6 @@ solar_system_ephemeris.set('de440s')
 #
 # Download and read in the raw image data taken by crew on Artemis-II
 
-# url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~medium.jpg"
-# To keep our online builds reasonable we use a reduced size image uncomment
-# the following line to use the full resolution image
 url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~orig.jpg"
 filename = url.split("/")[-1]
 with requests.get(url, stream=True) as res:
@@ -59,6 +55,10 @@ with requests.get(url, stream=True) as res:
 
 artemis_image_rbg = np.flipud(matplotlib.image.imread(filename))
 artemis_image = rgb2gray(artemis_image_rbg)
+
+# Downsample to reasonable size for processing and visualization
+artemis_image = transform.rescale(artemis_image, 1/6, anti_aliasing=True)
+downsample = True
 
 fig, ax = plt.subplots()
 ax.imshow(artemis_image_rbg, origin="lower")
@@ -94,6 +94,7 @@ NAIF_IDS = {
     "moon": 301,
     "sun": 10,
     "mercury": 199,
+    "venus": 299,
     "earth": 399,
     "mars": 499,
     "jupiter": 599,
@@ -105,62 +106,6 @@ NAIF_IDS = {
 times = np.linspace(obstime - (24*u.hour), obstime + (24*u.hour), 100)
 
 coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.items()}
-# tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["artemis_ii", "moon", "earth"]}
-
-##############################################################################
-# Plot general orbit location with zoom the location of Artemis-II to inspect
-# and make sure alignment makes sense for the eclipse image.
-
-sun_artemis = np.vstack([coords[n].cartesian.xyz for n in ['sun', 'artemis_ii']])
-
-x1, x2 = 0.9930, 0.9992
-y1, y2 = -0.10856, -0.10806
-
-fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9, 5))
-# Overview panel - with labels
-ax0.plot(sun_artemis[:,0], sun_artemis[:,2], 'k-',
-         label="Sun Artemis-II line", linewidth=0.5)
-for name, coord in coords.items():
-    line = ax0.plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o',
-                    label=name.title().replace('i', 'I'))
-    # if name in tracks:
-    #     ax0.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
-    #              color=line[0].get_color())
-
-# Compute direction vector from Sun to Artemis-II
-sun_xyz = coords['sun'].cartesian.xyz.value
-art_xyz = coords['artemis_ii'].cartesian.xyz.value
-direction = art_xyz - sun_xyz
-direction /= np.linalg.norm(direction)
-
- # Extend across full x range of overview plot
-t = np.linspace(-31, 2.5, 100)
-line_x = sun_xyz[0] + t * direction[0]
-line_z = sun_xyz[2] + t * direction[2]
-
-ax0.plot(line_x, line_z, 'k-', label="Sun Artemis-II line", linewidth=0.5)
-ax1.plot(line_x, line_z, 'k-', label="_nolegend_", linewidth=0.5)
-
-# Zoom panel - no labels
-ax1.plot(sun_artemis[:,0], sun_artemis[:,2], 'k-',
-         label="_nolegend_", linewidth=0.5)
-for name, coord in coords.items():
-    line = ax1.plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o',
-                    label="_nolegend_")
-    # if name in tracks:
-    #     ax1.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
-    #              color=line[0].get_color())
-
-ax1.set_xlim(x1, x2)
-ax1.set_ylim(y1, y2)
-
-rect = Rectangle((x1, y1), x2 - x1, y2 - y1,
-                 linewidth = 1, edgecolor = 'k', facecolor = 'none', linestyle = '--')
-ax0.add_patch(rect)
-mark_inset(ax0, ax1, loc1=2, loc2=3, fc="none", ec="k", linewidth=0.5, linestyle='--')
-
-ax0.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0, fontsize=8)
-plt.tight_layout()
 
 ##############################################################################
 # Find and fit Moon's limb and center
@@ -172,7 +117,7 @@ plt.tight_layout()
 # to extract and ROI for full resolution pass
 
 print("starting low res pass")
-scale = 0.1
+scale = 0.1 if downsample else 0.5
 down_scaled = transform.rescale(artemis_image, scale, anti_aliasing=True)
 
  # Edge detection
@@ -252,7 +197,7 @@ print(plate_scale)
 # Make a Map
 # ==========
 #
-# Make map using the meta data obtained so far and `sunpy.map.header_helper.make_fitswcs_header`
+# Make map using the metadata obtained so far and `sunpy.map.header_helper.make_fitswcs_header`
 
 frame = Helioprojective(observer=coords['artemis_ii'], obstime=obstime)
 moon_hpc = coords['moon'].transform_to(frame)
@@ -316,13 +261,14 @@ fig.tight_layout()
 # ===============
 #
 # Can see a pretty clear roll so use positions of the planets to estimate the
-# camera orientation or roll. Median filter the image to remove most stars and
-# cosmic rays and then use `skimage.feature.peak_local_max` to find the
-# remaining peaks which should be the planets.
+# camera orientation or roll.
 
-artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
-planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
-del artemis_median_img
+if downsample:
+    artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
+    planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
+    del artemis_median_img
+else:
+    planets_pixels = peak_local_max(artemis_image, threshold_abs=0.9, num_peaks=3, min_distance=30)
 
 planets_pix_x = planets_pixels[:,1]
 planets_pix_y = planets_pixels[:,0]
@@ -438,48 +384,12 @@ for i, name in enumerate(["saturn", "mars", "mercury"]):
      print(f"{name}: residual without SIP=({ax-px_nosip[0]:.1f}, {ay-px_nosip[1]:.1f})  "
            f"with SIP=({ax-px_sip[0]:.1f}, {ay-px_sip[1]:.1f})")
 
-##############################################################################
-# Switch to astropy as bug in sunpy map seem to be dropping the SIP headers at
-# the moment.
-
-fig, ax = plt.subplots(subplot_kw={"projection": wcs_sip}, figsize=(9, 5))
-ax.imshow(artemis_image, origin="lower", cmap="gray")
-
-for name, coord in planets.items():
-     hpc = coord.transform_to(artemis_map_roll.coordinate_frame)
-     px, py = wcs_sip.all_world2pix([[hpc.Tx.to(u.deg).value,
-                                      hpc.Ty.to(u.deg).value]], 0)[0]
-     ax.plot(px, py, 'o', markerfacecolor='none', label=name.title())
-
-# lunar limb
-theta = np.linspace(0, 2*np.pi, 100)
-limb_tx = (moon_hpc.Tx + np.sin(theta*u.rad)*moon_obs).to(u.deg).value
-limb_ty = (moon_hpc.Ty + np.cos(theta*u.rad)*moon_obs).to(u.deg).value
-limb_px, limb_py = wcs_sip.all_world2pix(np.column_stack([limb_tx, limb_ty]), 0).T
-ax.plot(limb_px, limb_py, 'b-', label="Lunar Limb")
-ax.plot_coord(moon_hpc, 'b+', label="Lunar Center" )
-
-ax.legend()
-ax.set_xlim(0, artemis_image.shape[1])
-ax.set_ylim(0, artemis_image.shape[0])
-
 #######################################################################
 # A bug in sunpy map means for the moment need to manually apply the
 # sip correction to the planet positions.
 
-def apply_sip_to_coords(coords_dict, wcs_sip, amap):
-    """Return a new dict of SkyCoords with SIP distortion applied."""
-    corrected = {}
-    for name, coord in coords_dict.items():
-        hpc = coord.transform_to(amap.coordinate_frame)
-        tx = np.atleast_1d(hpc.Tx.to(u.deg).value)
-        ty = np.atleast_1d(hpc.Ty.to(u.deg).value)
-        px, py = wcs_sip.all_world2pix(np.column_stack([tx, ty]), 0).T
-        corrected[name] = amap.pixel_to_world(px*u.pix, py*u.pix)
-    return corrected
-
-planets_sip = apply_sip_to_coords(planets, wcs_sip, artemis_map_roll)
-fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets_sip)
+artemis_map_final = Map((artemis_image, header_sip))
+fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
 
