@@ -16,9 +16,11 @@ The resulting calibrated sunpy.map.Map allows solar corona features to be locate
 from pathlib import Path
 
 import exifread
+import hvpy
 import matplotlib
 import numpy as np
 import requests
+from hvpy.datasource import DataSource
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 from scipy.signal import medfilt2d
@@ -32,9 +34,11 @@ from astropy.coordinates import CartesianRepresentation, SkyCoord, solar_system_
 from astropy.time import Time
 from astropy.wcs import WCS
 
+import sunpy.map
 from sunpy.coordinates import Helioprojective, SphericalScreen, get_horizons_coord
 from sunpy.map import Map
 from sunpy.map.header_helper import make_fitswcs_header
+from sunpy.util.config import get_and_create_download_dir
 
 # Accurate planetary ephemeris
 solar_system_ephemeris.set('de440s')
@@ -396,5 +400,32 @@ artemis_map_final = Map((artemis_image, header_sip))
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
+
+
+
+lasco_c2_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
+                                                 DataSource.LASCO_C2.value),
+                                filename=get_and_create_download_dir() + "/LASCO_C2.jp2", overwrite=True)
+lasco_c2_map = Map(lasco_c2_file)
+lasco_c3_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
+                                                 DataSource.LASCO_C3.value),
+                                filename=get_and_create_download_dir() + "/LASCO_C3.jp2", overwrite=True)
+lasco_c3_map = Map(lasco_c3_file)
+
+
+with SphericalScreen(coords["artemis_ii"]):
+    c3_map_img = lasco_c3_map.reproject_to(artemis_map_final.wcs)
+    c2_map_img = lasco_c2_map.reproject_to(artemis_map_final.wcs)
+
+
+all_hpc = sunpy.map.all_coordinates_from_map(c3_map_img)
+moon_cen = SkyCoord(moon_hpc.Tx, moon_hpc.Ty, frame=c3_map_img.coordinate_frame)
+offsets = all_hpc.separation(moon_cen)
+segment_mask = offsets >= moon_obs
+
+c3_map_img.data[segment_mask] = np.nan
+
+c3_map_img.plot(axes=ax, autoalign=False)
+c2_map_img.plot(axes=ax, autoalign=False)
 
 # sphinx_gallery_thumbnail_number = -1
