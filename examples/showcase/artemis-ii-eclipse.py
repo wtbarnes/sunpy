@@ -63,6 +63,8 @@ artemis_image = rgb2gray(artemis_image_rbg)
 fig, ax = plt.subplots()
 ax.imshow(artemis_image_rbg, origin="lower")
 ax.set_axis_off()
+del artemis_image_rbg
+
 
 ##############################################################################
 # Extract meta data (optional)
@@ -183,6 +185,7 @@ radii = np.arange(0.25*h, 0.4*h, 10)
  # Hough
 hough_res = hough_circle(edges, radii)
 accums, cx, cy, rad = hough_circle_peaks(hough_res, radii, total_num_peaks=1)
+del hough_res
 
  # Scale back to original resolution
 moon_x = int(cx[0] / scale)
@@ -319,6 +322,7 @@ fig.tight_layout()
 
 artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
 planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
+del artemis_median_img
 
 planets_pix_x = planets_pixels[:,1]
 planets_pix_y = planets_pixels[:,0]
