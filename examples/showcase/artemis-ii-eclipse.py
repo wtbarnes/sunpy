@@ -3,7 +3,8 @@
 Artemis-II Solar Eclipse
 ========================
 
-This example demonstrates how to perform astrometric calibration of a solar eclipse image taken by crew using digital camera aboard the Artemis-II spacecraft.
+This example demonstrates how to process a solar eclipse image taken by Artemis-II crew using digital camera aboard the spacecraft during their lunar flyby on April 7, 2026.
+Due to the relative position of the Artemis-II spacecraft and the moon this eclipse lasted nearly 54 minutes of totality far exceeding what is possible on Earth
 Starting from raw JPEG images with EXIF metadata the observation time is extracted.
 Then the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial helioprojective WCS using `sunpy.map.make_fitswcs_header`.
 The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically using `photutils.detection.DAOStarFinder`.
@@ -11,23 +12,20 @@ Finally, the residual radial barrel distortion is modeling using a single SIP co
 The resulting calibrated sunpy.map.Map allows solar corona features to be located.
 
 """
-from pathlib import Path
 
-import exifread
 import matplotlib
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle, Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from photutils.detection import DAOStarFinder
+from scipy.signal import medfilt2d
 from skimage.color import rgb2gray
-from skimage.feature import canny
+from skimage.feature import canny, peak_local_max
 from skimage.transform import hough_circle, hough_circle_peaks
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation, SkyCoord, solar_system_ephemeris
-from astropy.stats import mad_std
 from astropy.time import Time
 from astropy.wcs import WCS
 
@@ -38,6 +36,9 @@ from sunpy.map import Map, make_fitswcs_header
 solar_system_ephemeris.set('de440s')
 
 ##############################################################################
+# Getting and convert the image
+# =============================
+#
 # Download and read in the raw image data taken by crew on Artemis-II
 
 url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~orig.jpg"
@@ -56,20 +57,23 @@ ax.imshow(artemis_image_rbg, origin="lower")
 ax.set_axis_off()
 
 ##############################################################################
-# Extract meta data
+# Extract meta data (optional)
+#
+# Requires extra package (exifread)
 
-with Path(filename).open("rb") as f:
-    tags = exifread.process_file(f)
+obstime = Time("2026-04-07T01:06:19.000")
 
-obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
-obsdate = obsdate.replace(":", "-")
-obstime = Time(f"{obsdate}T{obstime}")
-
-hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
-offset = hours*u.hour
-
-obstime = obstime
-# obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
+# with Path(filename).open("rb") as f:
+#     tags = exifread.process_file(f)
+#
+# obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
+# obsdate = obsdate.replace(":", "-")
+# obstime = Time(f"{obsdate}T{obstime}")
+#
+# hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
+# offset = hours*u.hour
+#
+# # obstime = obstime + offset # It seems like the timezone or offset is set incorrectly
 
 ##############################################################################
 # Extract ROI around the moon
@@ -79,6 +83,9 @@ slice_x = slice(2100,4667)
 roi = artemis_image[slice_y, slice_x]
 
 ##############################################################################
+# Get Coordinates
+# ===============
+#
 # Get coordinates at observation time and 48 hour interval
 
 NAIF_IDS = {
@@ -101,7 +108,7 @@ tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["ar
 
 ##############################################################################
 # Plot general orbit location with zoom the location of Artemtis-II to inspect
-# and make sure alignment make sense for the eclipse image.
+# and make sure alignment makes sense for the eclipse image.
 
 sun_artemis = np.vstack([coords[n].cartesian.xyz for n in ['sun', 'artemis_ii']])
 
@@ -155,6 +162,9 @@ ax0.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0, fontsize
 plt.tight_layout()
 
 ##############################################################################
+# Find and fit Moon's limb and center
+# ===================================
+#
 # Edge detection and Hough filtering to obtain the moons limb and center.
 
 edges = canny(roi, sigma=2)
@@ -182,6 +192,9 @@ fig.legend()
 
 
 ##############################################################################
+# Create meta data
+# ================
+#
 # Build up meta data required to make a map
 
 im_cx = (cx[0] + slice_x.start) * u.pix
@@ -199,6 +212,9 @@ print(plate_scale)
 
 
 ##############################################################################
+# Make a Map
+# ==========
+#
 # Make map using the meta data obtained so far and `make_fitswcs_header`
 
 frame = Helioprojective(observer=coords['artemis_ii'], obstime=obstime)
@@ -216,8 +232,8 @@ artemis_map = Map(artemis_image, header)
 ##############################################################################
 # Reusable plot helper
 
-def plot_artemis_map(amap, moon_coord, planets, reset_lim=True, legend=True):
-    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=(9, 4))
+def plot_artemis_map(amap, moon_coord, planets, reset_lim=True, legend=True, figsize=(9,4), **kwargs):
+    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=(9, 4), **kwargs)
     amap.plot(axes=ax)
     amap.draw_grid(axes=ax)
     amap.draw_limb(axes=ax, label='Sun')
@@ -250,7 +266,7 @@ fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets, reset_lim=False)
 fig.tight_layout()
 
 ##############################################################################
-# So Mercury, Mars, Saturn and Neptune are all in the image but Neptune not
+# So Mercury, Mars, Saturn and Neptune are all in the image but Neptune's not
 # visible as to distant/faint.
 
 planets = {name: coords[name] for name in ["mercury", "mars", "saturn"]}
@@ -259,28 +275,29 @@ fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets, reset_lim=False)
 fig.tight_layout()
 
 ##############################################################################
+# Find roll angle
+# ===============
+#
 # Can see a pretty clear roll so use positions of the planets to estimate the
-# camera orientation or roll. First use `DAOStarFinder` to find the planets.
+# camera orientation or roll. Median filter the image to remove most stars and
+# cosmic rays and then use `peak_local_max` to find the remaining peaks which
+# should be the planets
 
-data = artemis_map.data
+#artemis_median_img = rank.median(artemis_image.astype(np.uint8), disk(5))
+artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
+planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
 
-bkg_sigma = mad_std(data)
+planets_pix_x = planets_pixels[:,1]
+planets_pix_y = planets_pixels[:,0]
 
-# wide fwhm to exclude small stars keep planets
-daofind = DAOStarFinder(fwhm = 20.0, threshold = 0.75, brightest=3)
-sources = daofind(data)
-
-planets_x = sources['xcentroid']
-planets_y = sources['ycentroid']
-
-star_coords = artemis_map.pixel_to_world(planets_x * u.pix, planets_y * u.pix)
+planet_coords = artemis_map.pixel_to_world(planets_pix_x * u.pix, planets_pix_y * u.pix)
 
 ##############################################################################
 # Verify we've found the planets.
 
 fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets)
 with SphericalScreen(coords["artemis_ii"]):
-    ax.plot_coord(star_coords, 's', markerfacecolor='none')
+    ax.plot_coord(planet_coords, 's', markerfacecolor='none')
 
 ##############################################################################
 # Need to know which pixel position correspond to which planets from the map
@@ -290,9 +307,9 @@ with SphericalScreen(coords["artemis_ii"]):
 
 # Saturn, Mars, Mercury
 with SphericalScreen(coords["artemis_ii"]):
-    sep = moon_hpc.transform_to(star_coords.frame).separation(star_coords)
+    sep = moon_hpc.transform_to(planet_coords.frame).separation(planet_coords)
 planet_index = np.argsort(sep)
-actual_planets_pixel = CartesianRepresentation(planets_x[planet_index], planets_y[planet_index], [0] * 3) * u.pix
+actual_planets_pixel = CartesianRepresentation(planets_pix_x[planet_index], planets_pix_y[planet_index], [0] * 3) * u.pix
 
 moon_pixel = CartesianRepresentation(*artemis_map.wcs.world_to_pixel(moon_hpc), 0)*u.pix
 
@@ -330,6 +347,9 @@ artemis_map_roll = Map(artemis_image, header_roll)
 fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 
 ##############################################################################
+# Correct optical distortion
+# ==========================
+#
 # Assume this is some kind of lens distortion (barrel or pincushion) derive
 # the correction from the observer vs actual planet positions.
 
@@ -338,7 +358,7 @@ r_actual, r_predicted = [], []
 for i, name in enumerate(["saturn", "mars", "mercury"]):
     hpc = planets[name].transform_to(artemis_map_roll.coordinate_frame)
     px, py = artemis_map_roll.wcs.world_to_pixel(hpc)
-    ax, ay = planets_x[planet_index][i], planets_y[planet_index][i]
+    ax, ay = planets_pix_x[planet_index][i], planets_pix_y[planet_index][i]
     r_predicted.append(np.sqrt((px - cx)**2 + (py - cy)**2))
     r_actual.append(np.sqrt((ax - cx)**2 + (ay - cy)**2))
 
@@ -377,7 +397,7 @@ for i, name in enumerate(["saturn", "mars", "mercury"]):
      hpc = planets[name].transform_to(artemis_map_roll.coordinate_frame)
      px_nosip = wcs_sip.wcs_world2pix([[hpc.Tx.to(u.deg).value, hpc.Ty.to(u.deg).value]], 0)[0]
      px_sip   = wcs_sip.all_world2pix([[hpc.Tx.to(u.deg).value, hpc.Ty.to(u.deg).value]], 0)[0]
-     ax, ay   = planets_x[planet_index][i], planets_y[planet_index][i]
+     ax, ay   = planets_pix_x[planet_index][i], planets_pix_y[planet_index][i]
      print(f"{name}: residual without SIP=({ax-px_nosip[0]:.1f}, {ay-px_nosip[1]:.1f})  "
            f"with SIP=({ax-px_sip[0]:.1f}, {ay-px_sip[1]:.1f})")
 
