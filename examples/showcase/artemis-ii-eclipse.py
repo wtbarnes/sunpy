@@ -103,7 +103,7 @@ NAIF_IDS = {
 times = np.linspace(obstime - (24*u.hour), obstime + (24*u.hour), 100)
 
 coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.items()}
-tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["artemis_ii", "moon", "earth"]}
+# tracks =  {name: get_horizons_coord(str(NAIF_IDS[name]), times) for name in ["artemis_ii", "moon", "earth"]}
 
 ##############################################################################
 # Plot general orbit location with zoom the location of Artemis-II to inspect
@@ -121,9 +121,9 @@ ax0.plot(sun_artemis[:,0], sun_artemis[:,2], 'k-',
 for name, coord in coords.items():
     line = ax0.plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o',
                     label=name.title().replace('i', 'I'))
-    if name in tracks:
-        ax0.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
-                 color=line[0].get_color())
+    # if name in tracks:
+    #     ax0.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
+    #              color=line[0].get_color())
 
 # Compute direction vector from Sun to Artemis-II
 sun_xyz = coords['sun'].cartesian.xyz.value
@@ -145,9 +145,9 @@ ax1.plot(sun_artemis[:,0], sun_artemis[:,2], 'k-',
 for name, coord in coords.items():
     line = ax1.plot(coord.cartesian.xyz[0], coord.cartesian.xyz[2], 'o',
                     label="_nolegend_")
-    if name in tracks:
-        ax1.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
-                 color=line[0].get_color())
+    # if name in tracks:
+    #     ax1.plot(tracks[name].cartesian.xyz[0], tracks[name].cartesian.xyz[2],
+    #              color=line[0].get_color())
 
 ax1.set_xlim(x1, x2)
 ax1.set_ylim(y1, y2)
@@ -169,15 +169,16 @@ plt.tight_layout()
 # First pass on a downscaled version to get an estimate and use this estimate
 # to extract and ROI for full resolution pass
 
+print("starting low res pass")
 scale = 0.1
 down_scaled = transform.rescale(artemis_image, scale, anti_aliasing=True)
 
  # Edge detection
 edges = canny(down_scaled, sigma=2)
 
- # Radius range in scaled image (from inspection of time radius >0.3 < 0.5 of image height
+ # Radius range in scaled image (diameter ~1/3 of image height)
 h, w = down_scaled.shape
-radii = np.arange(0.2*h, 0.5*h, 10)
+radii = np.arange(0.25*h, 0.4*h, 10)
 
  # Hough
 hough_res = hough_circle(edges, radii)
@@ -187,11 +188,11 @@ accums, cx, cy, rad = hough_circle_peaks(hough_res, radii, total_num_peaks=1)
 moon_x = int(cx[0] / scale)
 moon_y = int(cy[0] / scale)
 moon_r = rad[0] / scale
-roi_ext = int(1.1*moon_r)
+roi_ext = int(1.05*moon_r)
 
 slice_y = slice(moon_y-roi_ext, moon_y+roi_ext)
 slice_x = slice(moon_x-roi_ext, moon_x+roi_ext)
-print(f"moon_x: {moon_x}, moon_y: {moon_y}, moon_r: {moon_r}")
+print(f"Low res pass moon_x: {moon_x}, moon_y: {moon_y}, moon_r: {moon_r}")
 
 ##############################################################################
 # Full resolution pass within ROI
@@ -204,6 +205,8 @@ hough_radii = np.arange(np.floor(np.mean(edges.shape) / 4), np.ceil(np.mean(edge
 hough_res = hough_circle(edges, hough_radii)
 
 accums, cx, cy, radii = hough_circle_peaks(hough_res, hough_radii, total_num_peaks=1)
+
+print(f"High res pass moon_x: {cx[0] + slice_x.start}, moon_y: {cy[0]+slice_y.start}, moon_r: {radii}")
 
 ##############################################################################
 # Plot edge detection Hough filtering results
