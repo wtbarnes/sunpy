@@ -56,9 +56,11 @@ with requests.get(url, stream=True) as res:
 artemis_image_rbg = np.flipud(matplotlib.image.imread(filename))
 artemis_image = rgb2gray(artemis_image_rbg)
 
+downsampled = True
 # Downsample to reasonable size for processing and visualization
-artemis_image = transform.rescale(artemis_image, 1/6, anti_aliasing=True)
-downsample = True
+# can be set to False if running locally for full resolution
+if downsampled:
+    artemis_image = transform.rescale(artemis_image, 1/6, anti_aliasing=True)
 
 fig, ax = plt.subplots()
 ax.imshow(artemis_image_rbg, origin="lower")
@@ -117,7 +119,7 @@ coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.i
 # to extract and ROI for full resolution pass
 
 print("starting low res pass")
-scale = 0.1 if downsample else 0.5
+scale = 0.5 if downsampled else 0.1
 down_scaled = transform.rescale(artemis_image, scale, anti_aliasing=True)
 
  # Edge detection
@@ -263,12 +265,12 @@ fig.tight_layout()
 # Can see a pretty clear roll so use positions of the planets to estimate the
 # camera orientation or roll.
 
-if downsample:
+if downsampled:
+    planets_pixels = peak_local_max(artemis_image, threshold_abs=0.9, num_peaks=3, min_distance=30)
+else:
     artemis_median_img = medfilt2d(artemis_image, kernel_size=5)
     planets_pixels = peak_local_max(artemis_median_img, threshold_abs=0.9, num_peaks=3, min_distance=30)
     del artemis_median_img
-else:
-    planets_pixels = peak_local_max(artemis_image, threshold_abs=0.9, num_peaks=3, min_distance=30)
 
 planets_pix_x = planets_pixels[:,1]
 planets_pix_y = planets_pixels[:,0]
@@ -389,7 +391,7 @@ for i, name in enumerate(["saturn", "mars", "mercury"]):
 # sip correction to the planet positions.
 
 artemis_map_final = Map((artemis_image, header_sip))
-fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
+fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
 
