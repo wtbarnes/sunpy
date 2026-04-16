@@ -3,13 +3,13 @@
 Artemis-II Solar Eclipse
 ========================
 
-This example demonstrates how to process a solar eclipse image taken by Artemis-II crew using digital camera aboard the spacecraft during their lunar flyby on April 7, 2026.
-Due to the relative position of the Artemis-II spacecraft and the moon this eclipse provided nearly 54 minutes of totality far exceeding what is possible on Earth.
-Starting from raw JPEG images with EXIF metadata the observation time is extracted.
-Then the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial Helioprojective WCS using `sunpy.map.header_helper.make_fitswcs_header`.
+This example demonstrates how to process a solar eclipse image taken by the Artemis-II crew using a digital camera aboard the spacecraft during their lunar flyby on April 7, 2026.
+Due to the relative positions of the Artemis II spacecraft and the Moon, this eclipse provided nearly 54 minutes of totality, far exceeding what is possible on Earth.
+Starting from raw JPEG images with EXIF metadata, the observation time is extracted.
+Then, the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial Helioprojective WCS using `sunpy.map.header_helper.make_fitswcs_header`.
 The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically.
 Finally, the residual radial barrel distortion is modeling using a single SIP coefficient k1 derived from the planet positions.
-With the the resulting calibrated `sunpy.map.Map` it is straightforward to overplot some space based corongraph data ontop of the eclipse image.
+With the resulting calibrated `sunpy.map.Map` it is straightforward to overplot some space-based coronagraph data on top of the eclipse image.
 
 
 """
@@ -40,15 +40,15 @@ from sunpy.map import Map
 from sunpy.map.header_helper import make_fitswcs_header
 from sunpy.util.config import get_and_create_download_dir
 
-# Accurate planetary ephemeris
+# Accurate planetary ephemeris from JPL Horizons
 solar_system_ephemeris.set('de440s')
 
 ##############################################################################
 # Get and Convert the Raw Image
 # =============================
 #
-# Download and read in the raw image data taken by crew on Artemis-II and
-# covert the RGB jpeg data to a gray scale image.
+# Download and read in the raw image data taken by the crew on Artemis-II and
+# convert the RGB jpeg data to a grayscale image.
 
 url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~orig.jpg"
 filename = url.split("/")[-1]
@@ -75,7 +75,7 @@ del artemis_image_rbg
 ##############################################################################
 # Extract Metadata
 #
-# Extra metadata store in the JPEG image in particular the date and time the
+# Extra metadata stored in the JPEG image, in particular the date and time the
 # image was taken.
 
 with Path(filename).open("rb") as f:
@@ -95,8 +95,8 @@ offset = hours*u.hour
 # Get Coordinates
 # ===============
 #
-# Get coordinates of Artemis-II spacecraft, Sun, Moon and planets at the
-# observation time
+# Get the coordinates of the Artemis II spacecraft, the Sun, the Moon, and
+# the planets at the observation time.
 
 NAIF_IDS = {
     "artemis_ii": -1024,
@@ -118,10 +118,10 @@ coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.i
 # Find and Fit Moon's Limb and Center
 # ===================================
 #
-# Edge detection and Hough filtering to obtain the moons limb and center.
+# Edge detection and Hough filtering are used to obtain the moons limb and center.
 #
-# First pass on a downscaled version to get an estimate and use this estimate
-# to extract and ROI for full resolution pass.
+# First pass on a downscaled version is used to get an estimate, which is
+# used to extract and ROI for full resolution pass.
 
 print("starting low res pass")
 scale = 0.5 if downsampled else 0.1
@@ -184,7 +184,7 @@ fig.legend()
 # Create metadata
 # ================
 #
-# Build up meta data required to make a map
+# Build up  the metadata required to make a map.
 
 im_cx = (cx[0] + slice_x.start) * u.pix
 im_cy = (cy[0] + slice_y.start) * u.pix
@@ -255,8 +255,8 @@ fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets, reset_lim=False)
 fig.tight_layout()
 
 ##############################################################################
-# So Mercury, Mars, Saturn and Neptune are all in the image but Neptune's not
-# visible as to distant/faint.
+# Mercury, Mars, Saturn and Neptune are all visible in the image but Neptune's not
+# visible as it is too distant and faint.
 
 planets = {name: coords[name] for name in ["mercury", "mars", "saturn"]}
 
@@ -267,9 +267,9 @@ fig.tight_layout()
 # Find roll angle
 # ===============
 #
-# Can see a pretty clear roll so use positions of the planets to estimate the
-# camera orientation or roll. Use `skimage.feature.peak_local_max` to find
-# the brightest peaks which should be the planets.
+# A clear roll is visible, so the positions of the planets are used to estimate the
+# camera orientation. Use `skimage.feature.peak_local_max` to find
+# the brightest peaks, which should correspond to the planets.
 
 if downsampled:
     planets_pixels = peak_local_max(artemis_image, threshold_abs=0.9, num_peaks=3, min_distance=30)
@@ -284,17 +284,17 @@ planets_pix_y = planets_pixels[:,0]
 planet_coords = artemis_map.pixel_to_world(planets_pix_x * u.pix, planets_pix_y * u.pix)
 
 ##############################################################################
-# Verify we've found the planets.
+# Verify we've correctly identified the planets.
 
 fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets)
 with SphericalScreen(coords["artemis_ii"]):
     ax.plot_coord(planet_coords, 's', markerfacecolor='none')
 
 ##############################################################################
-# Need to know which pixel position correspond to which planets from the map
-# above can see that in terms of distance from the Moon they are Saturn, Mars
-# and Mercury in order. So we will sort the by the separation angle between
-# the moon's center and the planet
+# We need to determine which pixel positions correspond to which planets.
+# From the map above, we can see that, in terms of distance from the Moon,
+# the planets are Saturn, Mars, and Mercury, in that order. Therefore, we
+# sort them by the separation angle from the Moon's center.
 
 # Saturn, Mars, Mercury
 with SphericalScreen(coords["artemis_ii"]):
@@ -341,9 +341,9 @@ fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 # Correct Optical Distortion
 # ==========================
 #
-# Assume this is some kind of lens distortion (barrel or pincushion) centered
-# in the middle of the image and derive the correction from the observed vs
-# actual planet positions.
+# Assume the distortion is due to the lens (e.g., barrel or pincushion),
+# centered in the middle of the image, and derive the correction from the
+# observed versus actual planet positions.
 
 cx, cy = artemis_map_roll.wcs.wcs.crpix
 r_actual, r_predicted = [], []
