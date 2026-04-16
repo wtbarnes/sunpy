@@ -9,7 +9,7 @@ Starting from raw JPEG images with EXIF metadata the observation time is extract
 Then the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial Helioprojective WCS using `sunpy.map.header_helper.make_fitswcs_header`.
 The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically.
 Finally, the residual radial barrel distortion is modeling using a single SIP coefficient k1 derived from the planet positions.
-With the the resulting calibrated `sunpy.map.Map` it is straightforward to overplot some space based corongraph data ontop of the eclipse image.
+With the  resulting calibrated `sunpy.map.Map` it is straightforward to overplot some space based corongraph data ontop of the eclipse image.
 
 
 """
@@ -437,7 +437,6 @@ all_hpc = sunpy.map.all_coordinates_from_map(c3_map_img)
 # Calculate the angular offset from the center of the moon for each pixel.
 moon_cen_offsets = all_hpc.separation(coords['moon'])
 
-
 # Create a mask which is True for all offsets greater than the
 # observed angular width of the moon.
 c3_map_img.mask = np.logical_or(
@@ -448,7 +447,6 @@ c3_map_img.mask = np.logical_or(
 #######################################################################
 # Over plot the C2 and C3 data ontop of the eclipse image.
 
-artemis_map_final = Map((artemis_image, header_sip))
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
