@@ -5,12 +5,14 @@ Artemis-II Solar Eclipse
 
 This example demonstrates how to process a solar eclipse image taken by the Artemis-II crew using a digital camera aboard the spacecraft during their lunar flyby on April 7, 2026.
 Due to the relative positions of the Artemis II spacecraft and the Moon, this eclipse provided nearly 54 minutes of totality, far exceeding what is possible on Earth.
-Starting from raw JPEG images with EXIF metadata, the observation time is extracted.
+# This example walks through turning one of those crew photos, a plain
+# JPEG with EXIF metadata and no pointing information,  into a `~sunpy.map.Map` with a Helioprojective WCS. 
+# Starting from raw JPEG images with EXIF metadata, the observation time is extracted.
 Then, the known positions of the Moon, Sun, and planets are retrieved from JPL Horizons via `sunpy.coordinates.get_horizons_coord` to build an initial Helioprojective WCS using `sunpy.map.header_helper.make_fitswcs_header`.
 The camera roll angle is refined by comparing the predicted and detected pixel positions of Saturn, Mars, and Mercury, identified automatically.
-Finally, the residual radial barrel distortion is modeling using a single SIP coefficient k1 derived from the planet positions.
+Finally, the residual radial barrel distortion is modelled using a single SIP coefficient k1 derived from the planet positions.
 With the resulting calibrated `sunpy.map.Map` it is straightforward to overplot some space-based coronagraph data on top of the eclipse image.
-
+Image credit: NASA/Artemis II crew 
 
 """
 from pathlib import Path
@@ -46,8 +48,8 @@ solar_system_ephemeris.set('de440s')
 ##############################################################################
 # Get and Convert the Raw Image
 # =============================
-#
-# Download and read in the raw image data taken by the crew on Artemis-II and
+The starting point is a single JPEG hosted in the NASA image library. It has no WCS, no pointing solution, or plate scale, we only have the raw image data.
+# We first download and read in the raw image data directly taken by the crew on Artemis-II and
 # convert the RGB jpeg data to a grayscale image.
 
 url = "https://images-assets.nasa.gov/image/art002e009301/art002e009301~orig.jpg"
@@ -61,23 +63,28 @@ with requests.get(url, stream=True) as res:
 artemis_image_rbg = np.flipud(matplotlib.image.imread(filename))
 artemis_image = rgb2gray(artemis_image_rbg)
 
+##################################################
+# Lets downsample the image to reasonable size for processing and visualization.
+# The original frame is very large, so for this example we downsample by a factor of 6.
+# This can be set to `False` if running locally for full resolution analysis.
 downsampled = True
-# Downsample to reasonable size for processing and visualization
-# can be set to False if running locally for full resolution analysis
+
 if downsampled:
     artemis_image = transform.rescale(artemis_image, 1/6, anti_aliasing=True)
-
+##################################
+# And now lets plot the raw image.
 fig, ax = plt.subplots()
 ax.imshow(artemis_image_rbg, origin="lower")
 ax.set_axis_off()
+# Reduce memory usage on RTD build
 del artemis_image_rbg
 
 ##############################################################################
 # Extract Metadata
-#
-# Extra metadata stored in the JPEG image, in particular the date and time the
+# ==============
+# Lets now extract metadata stored in the JPEG image, in particular the date and time the
 # image was taken.
-
+The time stamp of the image is the key information we need, as from this we can query JPL horizons for the positions of Artemis II, the Sun, the Moon and the planets.
 with Path(filename).open("rb") as f:
     tags = exifread.process_file(f)
 
@@ -95,8 +102,9 @@ offset = hours*u.hour
 # Get Coordinates
 # ===============
 #
-# Get the coordinates of the Artemis II spacecraft, the Sun, the Moon, and
-# the planets at the observation time.
+# To get the coordinates of the Artemis II spacecraft, the Sun, the Moon, and
+# the planets at the observation time, we query JPL Horizons. 
+# Here we use the NAIF ID for the bodies for the query.
 
 NAIF_IDS = {
     "artemis_ii": -1024,
@@ -118,10 +126,11 @@ coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.i
 # Find and Fit Moon's Limb and Center
 # ===================================
 #
-# Edge detection and Hough filtering are used to obtain the moons limb and center.
+#  While we now know where the Moon is on the sky, we still need to know where it lands in the image. Fitting the Moon's limb gives us that pixel, and combined with the Moon's known angular size, we can estimate the plate scale.
+# Here we use canny edge detection and circular Hough filtering are used to obtain the Moons limb and center.
 #
 # First pass on a downscaled version is used to get an estimate, which is
-# used to extract and ROI for full resolution pass.
+# used to extract and the region of interest (ROI) for full resolution pass.
 
 print("starting low res pass")
 scale = 0.5 if downsampled else 0.1
@@ -151,6 +160,11 @@ print(f"Low res pass moon_x: {moon_x}, moon_y: {moon_y}, moon_r: {moon_r}")
 
 ##############################################################################
 # Full resolution pass within ROI
+# ------------------------------
+#
+# Lets now re-run the limb fitting on the full resolution within the cropped ROI.
+
+
 
 roi = artemis_image[slice_y, slice_x]
 
@@ -165,6 +179,7 @@ print(f"High res pass moon_x: {cx[0] + slice_x.start}, moon_y: {cy[0]+slice_y.st
 
 ##############################################################################
 # Plot edge detection and Hough filtering results
+# -----------------------------------------------
 
 fig, ax = plt.subplots(ncols=3, nrows=1, figsize=(9, 3))
 ax[0].imshow(artemis_image[slice_y, slice_x])
@@ -184,7 +199,8 @@ fig.legend()
 # Create metadata
 # ================
 #
-# Build up  the metadata required to make a map.
+# Build up  the metadata required to make a `sunpy.map.Map`
+# Here we calculate the reference pixel, and plate scale.
 
 im_cx = (cx[0] + slice_x.start) * u.pix
 im_cy = (cy[0] + slice_y.start) * u.pix
@@ -204,7 +220,7 @@ print(plate_scale)
 # Make a Map
 # ==========
 #
-# Make map using the metadata obtained so far and `sunpy.map.header_helper.make_fitswcs_header`
+# Make a `sunpy.map.Map` using the metadata obtained so far using `sunpy.map.header_helper.make_fitswcs_header`
 
 frame = Helioprojective(observer=coords['artemis_ii'], obstime=obstime)
 moon_hpc = coords['moon'].transform_to(frame)
@@ -254,8 +270,7 @@ fig, ax = plot_artemis_map(artemis_map, moon_hpc, planets, reset_lim=False)
 fig.tight_layout()
 
 ##############################################################################
-# Mercury, Mars, Saturn and Neptune are all visible in the image but Neptune's not
-# visible as it is too distant and faint.
+# Mercury, Mars, Saturn and Neptune are within the field of view, though Neptune is not visible as it is too distant and faint.
 
 planets = {name: coords[name] for name in ["mercury", "mars", "saturn"]}
 
@@ -331,7 +346,7 @@ header_roll = make_fitswcs_header(
 artemis_map_roll = Map(artemis_image, header_roll)
 
 ##############################################################################
-# Plot map and positions of Saturn, Mar and Mercury to see if the WCS is good.
+# Lets now plot map and positions of Saturn, Mars, and Mercury to see if check that the WCS is correct.
 # Seems to be some residual distortion that get worse towards the edges.
 
 fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
@@ -340,7 +355,7 @@ fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 # Correct Optical Distortion
 # ==========================
 #
-# Assume the distortion is due to the lens (e.g., barrel or pincushion),
+# We can see that there is some optical distortion. Lets assume the distortion is due to the lens (e.g., barrel or pincushion),
 # centered in the middle of the image, and derive the correction from the
 # observed versus actual planet positions.
 
@@ -406,9 +421,11 @@ fig.tight_layout()
 ################################################################################
 # Overplotting Coronagraph Images
 # ===============================
-# In this section we will fetch images of the near corona from SOOHO/LASCO
+# In this section we will fetch images of the near corona from SOHO/LASCO
 # and overplot them on the eclipse map.
-
+# The Artemis II image shows the faint outer corona around the Moon, as the spacecraft was close to the moon during the flyby, so the apparent angular size is much larger than the Sun's,                                                                     
+so it blocks not only the Sun's disk but a substantial region of the inner corona around it.
+# By reprojecting and overplotting the LASCO images, we can overlap them inside the Moons image, to produce a composite that extends from the inner corona outwards.
 # First step is to fetch the images from Helioviewer.
 lasco_c2_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
                                                  DataSource.LASCO_C2.value),
@@ -428,7 +445,7 @@ with SphericalScreen(coords["artemis_ii"]):
 
 
 ################################################################################
-# As the final step we will crop the LASCO C3 image to the limb of the moon.
+# As the final step we will crop the LASCO C3 image to the limb of the Moon.
 
 # Calculate coordinates for each pixel in the map.
 all_hpc = sunpy.map.all_coordinates_from_map(c3_map_img)
