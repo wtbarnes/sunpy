@@ -84,6 +84,7 @@ with Path(filename).open("rb") as f:
 obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
 obsdate = obsdate.replace(":", "-")
 obstime = Time(f"{obsdate}T{obstime}")
+print(obstime)
 
 hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
 offset = hours*u.hour
@@ -110,8 +111,6 @@ NAIF_IDS = {
     "uranus": 799,
     "neptune": 899
 }
-
-times = np.linspace(obstime - (24*u.hour), obstime + (24*u.hour), 100)
 
 coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.items()}
 
@@ -405,16 +404,13 @@ fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
 
-#######################################################################
-# Overplot Solar Observations
-# ===========================
-#
-# Since we now have a well calibrated coordinate aware eclipse map we
-# can use it to overplot some space based coronagraph data ontop of the
-# eclipse map
-#
-# First get some SOHO/LASCO C2 and C3 corongraph data.
+################################################################################
+# Overplotting Coronagraph Images
+# ===============================
+# In this section we will fetch images of the near corona from SOOHO/LASCO
+# and overplot them on the eclipse map.
 
+# First step is to fetch the images from Helioviewer.
 lasco_c2_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
                                                  DataSource.LASCO_C2.value),
                                 filename=get_and_create_download_dir() + "/LASCO_C2.jp2", overwrite=True)
@@ -424,30 +420,43 @@ lasco_c3_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
                                 filename=get_and_create_download_dir() + "/LASCO_C3.jp2", overwrite=True)
 lasco_c3_map = Map(lasco_c3_file)
 
-#######################################################################
-# Reproject the data to the same wcs as the final Artemis-II map.
+################################################################################
+# Next we reproject the LASCO map to the same WCS as the Artemis eclipse map.
 
 with SphericalScreen(coords["artemis_ii"]):
     c3_map_img = lasco_c3_map.reproject_to(artemis_map_final.wcs)
     c2_map_img = lasco_c2_map.reproject_to(artemis_map_final.wcs)
 
-#######################################################################
-# Mask the pixels extending beyond the lunar limb in C3.
 
+################################################################################
+# As the final step we will crop the LASCO C3 image to the limb of the moon.
+
+# Calculate coordinates for each pixel in the map.
 all_hpc = sunpy.map.all_coordinates_from_map(c3_map_img)
-moon_cen = SkyCoord(moon_hpc.Tx, moon_hpc.Ty, frame=c3_map_img.coordinate_frame)
-offsets = all_hpc.separation(coords['moon'])
-segment_mask = offsets >= moon_obs
 
+# Calculate the angular offset from the center of the moon for each pixel.
+moon_cen_offsets = all_hpc.separation(coords['moon'])
+
+
+# Create a mask which is True for all offsets greater than the
+# observed angular width of the moon.
+c3_map_img.mask = np.logical_or(
+    moon_cen_offsets >= moon_obs,
+    # Also mask out the parts of the image with no data
+    c3_map_img.data < 10,
+)
 #######################################################################
 # Over plot the C2 and C3 data ontop of the eclipse image.
 
-c3_map_img.data[segment_mask] = np.nan
 artemis_map_final = Map((artemis_image, header_sip))
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
 fig.tight_layout()
 
+# Mask out the parts of the C2 image with no data
+c2_map_img.mask = c2_map_img.data < 10
+
+# Overplot both LASCO images, with autoalign off as we already reprojected them.
 c3_map_img.plot(axes=ax, autoalign=False)
 c2_map_img.plot(axes=ax, autoalign=False)
 
