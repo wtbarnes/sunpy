@@ -83,6 +83,7 @@ with Path(filename).open("rb") as f:
 obsdate, obstime= tags['EXIF DateTimeDigitized'].values.split(" ")
 obsdate = obsdate.replace(":", "-")
 obstime = Time(f"{obsdate}T{obstime}")
+print(obstime)
 
 hours, _ = [int(part) for part in tags['EXIF OffsetTime'].values.split(":")]
 offset = hours*u.hour
@@ -434,11 +435,18 @@ all_hpc = sunpy.map.all_coordinates_from_map(c3_map_img)
 moon_cen = SkyCoord(moon_hpc.Tx, moon_hpc.Ty, frame=c3_map_img.coordinate_frame)
 
 # Calculate the angular offset from the center of the moon for each pixel.
-offsets = all_hpc.separation(moon_cen)
+moon_cen_offsets = all_hpc.separation(moon_cen)
 
 # Create a mask which is True for all offsets greater than the
 # observed angular width of the moon.
-c3_map_img.mask = offsets >= moon_obs
+c3_map_img.mask = np.logical_or(
+    moon_cen_offsets >= moon_obs,
+    # Also mask out the parts of the image with no data
+    c3_map_img.data < 10,
+)
+
+# Mask out the parts of the C2 image with no data
+c2_map_img.mask = c2_map_img.data < 10
 
 # Overplot both LASCO images, with autoalign off as we already reprojected them.
 c3_map_img.plot(axes=ax, autoalign=False)
