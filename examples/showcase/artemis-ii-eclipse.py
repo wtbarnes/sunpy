@@ -224,7 +224,6 @@ artemis_map = Map(artemis_image, header)
 def plot_artemis_map(amap, moon_coord, planets, reset_lim=True, legend=True, figsize=(9,4), **kwargs):
     fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=figsize, **kwargs)
     amap.plot(axes=ax)
-    amap.draw_grid(axes=ax)
     amap.draw_limb(axes=ax, label='Sun')
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[1].set_format_unit(u.deg)
@@ -456,8 +455,16 @@ fig.tight_layout()
 # Mask out the parts of the C2 image with no data
 c2_map_img.mask = c2_map_img.data < 10
 
+
+################################################################################
+# Now setup a new plot with the same distortion corrected eclipse image and the LASCO data.
+fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
+
 # Overplot both LASCO images, with autoalign off as we already reprojected them.
 c3_map_img.plot(axes=ax, autoalign=False)
 c2_map_img.plot(axes=ax, autoalign=False)
+
+ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
+fig.tight_layout()
 
 # sphinx_gallery_thumbnail_number = -2
