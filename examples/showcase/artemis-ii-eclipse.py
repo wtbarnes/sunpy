@@ -78,7 +78,7 @@ artemis_image_rbg = np.flipud(matplotlib.image.imread(filename))
 artemis_image = rgb2gray(artemis_image_rbg)
 
 ###############################################################################
-# Lets downsample the image to reasonable size for processing and
+# Let's downsample the image to reasonable size for processing and
 # visualization. The original frame is very large, so for this example we
 # downsample by a factor of 6. This can be set to `False` if running locally
 # for full resolution analysis.
@@ -88,7 +88,7 @@ if downsampled:
     artemis_image = transform.rescale(artemis_image, 1/6, anti_aliasing=True)
 
 ###############################################################################
-# And now lets plot the raw image.
+# And now let's plot the raw image.
 
 fig, ax = plt.subplots()
 ax.imshow(artemis_image_rbg, origin="lower")
@@ -100,7 +100,7 @@ del artemis_image_rbg
 # Extract Metadata
 # ================
 #
-# Lets now extract metadata stored in the JPEG image, in particular the date
+# Let's now extract metadata stored in the JPEG image, in particular the date
 # and time the image was taken. The time stamp of the image is the key
 # information we need, as from this we can query JPL horizons for the positions
 # of Artemis II, the Sun, the Moon and the planets.
