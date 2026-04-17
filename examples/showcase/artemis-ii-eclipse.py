@@ -150,11 +150,11 @@ coords =  {name: get_horizons_coord(str(id), obstime) for name, id in NAIF_IDS.i
 # it is in the image. Fitting the Moon's limb gives us that pixel location, and
 # combined with the Moon's known angular size, we can estimate the plate scale.
 #
-# Here we use canny edge detection and circular Hough filtering are used to
-# obtain the Moons limb and center.
+# Here we use canny edge detection and circular Hough filtering to obtain the
+# Moon's limb and center.
 #
 # First pass on a downscaled version is used to get an estimate, which is
-# used to extract and the region of interest (ROI) for full resolution pass.
+# used to extract the region of interest (ROI) for full resolution pass.
 
 print("starting low res pass")
 scale = 0.5 if downsampled else 0.1
@@ -186,10 +186,8 @@ print(f"Low res pass moon_x: {moon_x}, moon_y: {moon_y}, moon_r: {moon_r}")
 # Full resolution pass within ROI
 # -------------------------------
 #
-# Lets now re-run the limb fitting on the full resolution within the cropped
+# Let's now re-run the limb fitting on the full resolution within the cropped
 # ROI.
-
-
 
 roi = artemis_image[slice_y, slice_x]
 
@@ -239,7 +237,6 @@ print(moon_obs)
 
 plate_scale = moon_obs / im_radius
 print(plate_scale)
-
 
 ###############################################################################
 # Make a Map
@@ -373,8 +370,8 @@ header_roll = make_fitswcs_header(
 artemis_map_roll = Map(artemis_image, header_roll)
 
 ###############################################################################
-# Lets now plot map and positions of Saturn, Mars, and Mercury to see if check
-# that the WCS is correct.
+# Let's now plot map and positions of Saturn, Mars, and Mercury to check if
+# the WCS is correct.
 #
 # There seems to be some residual distortion that gets worse towards the edges.
 
@@ -384,7 +381,7 @@ fig, ax = plot_artemis_map(artemis_map_roll, moon_hpc, planets)
 # Correct Optical Distortion
 # ==========================
 #
-# We can see that there is some optical distortion let's assume the distortion
+# We can see that there is some optical distortion. Let's assume the distortion
 # is due to the lens (e.g., barrel or pincushion), centered in the middle of
 # the image, and derive the correction from the observed versus actual planet
 # positions.
@@ -459,10 +456,11 @@ fig.tight_layout()
 # a substantial region of the inner corona around it.
 #
 # By reprojecting and overplotting the LASCO images, we can overlap them inside
-# the Moons image, to produce a composite that extends from the inner corona
+# the Moon's image, to produce a composite that extends from the inner corona
 # outwards.
 #
 # First step is to fetch the images from Helioviewer.
+
 lasco_c2_file = hvpy.save_file(hvpy.getJP2Image(obstime.datetime,
                                                  DataSource.LASCO_C2.value),
                                 filename=get_and_create_download_dir() + "/LASCO_C2.jp2", overwrite=True)
@@ -503,6 +501,7 @@ c2_map_img.mask = c2_map_img.data < 10
 ###############################################################################
 # Now setup a new plot with the same distortion corrected eclipse image and
 # reprojected, masked LASCO data.
+
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 
 # Overplot both LASCO images, with autoalign off as we already reprojected them.
