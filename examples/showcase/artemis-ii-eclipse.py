@@ -264,6 +264,7 @@ artemis_map = Map(artemis_image, header)
 def plot_artemis_map(amap, moon_coord, planets, reset_lim=True, legend=True, figsize=(9,4), **kwargs):
     fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=figsize, **kwargs)
     amap.plot(axes=ax)
+    ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
     amap.draw_limb(axes=ax, label='Sun')
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[1].set_format_unit(u.deg)
@@ -444,7 +445,6 @@ for i, name in enumerate(["saturn", "mars", "mercury"]):
 artemis_map_final = Map((artemis_image, header_sip))
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
-ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
 fig.tight_layout()
 
 ###############################################################################
@@ -505,7 +505,6 @@ c2_map_img.mask = c2_map_img.data < 10
 # reprojected, masked LASCO data.
 
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
-ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
 
 # Overplot both LASCO images, with autoalign off as we already reprojected them.
 c3_map_img.plot(axes=ax, autoalign=False)
