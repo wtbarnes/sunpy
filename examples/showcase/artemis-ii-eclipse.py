@@ -263,8 +263,7 @@ artemis_map = Map(artemis_image, header)
 
 def plot_artemis_map(amap, moon_coord, planets, reset_lim=True, legend=True, figsize=(9,4), **kwargs):
     fig, ax = plt.subplots(1, 1, subplot_kw={"projection": amap}, figsize=figsize, **kwargs)
-    amap.plot(axes=ax)
-    ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
+    amap.plot(axes=ax, norm=simple_norm(amap.data, 'power', min_percent=10, max_percent=99.9))
     amap.draw_limb(axes=ax, label='Sun')
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[1].set_format_unit(u.deg)
