@@ -45,6 +45,7 @@ from skimage.transform import hough_circle, hough_circle_peaks
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation, SkyCoord, solar_system_ephemeris
 from astropy.time import Time
+from astropy.visualization import simple_norm
 from astropy.wcs import WCS
 
 import sunpy.map
@@ -443,6 +444,7 @@ for i, name in enumerate(["saturn", "mars", "mercury"]):
 artemis_map_final = Map((artemis_image, header_sip))
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
 ax.set_title(f"Artemis-II Solar Eclipse {obstime}")
+ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
 fig.tight_layout()
 
 ###############################################################################
@@ -503,6 +505,7 @@ c2_map_img.mask = c2_map_img.data < 10
 # reprojected, masked LASCO data.
 
 fig, ax = plot_artemis_map(artemis_map_final, moon_hpc, planets)
+ax.images[0].set_norm(simple_norm(artemis_image, 'power', min_percent=10, max_percent=99.9))
 
 # Overplot both LASCO images, with autoalign off as we already reprojected them.
 c3_map_img.plot(axes=ax, autoalign=False)
