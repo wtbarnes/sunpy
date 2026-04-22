@@ -381,7 +381,6 @@ sphinx_gallery_conf = {
     'remove_config_comments': True,
     'doc_module': ('sunpy'),
     'only_warn_on_example_error': True,
-    'parallel': True,
 }
 
 # -- Linking to OpenCV docs by using rst_epilog --------------------------------
